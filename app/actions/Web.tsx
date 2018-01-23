@@ -192,7 +192,7 @@ export function logRemotePlayStats(user: UserState, quest: QuestDetails, stats: 
       version: getAppVersion(),
       email: user.email,
       name: user.name,
-      stats: stats,
+      data: stats,
     };
 
     return fetch(authSettings.urlBase + '/analytics/remoteplay/stats', {

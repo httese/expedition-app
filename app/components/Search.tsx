@@ -67,7 +67,7 @@ class SearchSettingsCard extends React.Component<SearchSettingsCardProps, {}> {
       <Card title="Quest Search">
         <div className="searchForm">
           <FlatButton disabled={true}>
-            For {this.props.numPlayers} adventurer{this.props.numPlayers > 1 ? 's' : ''} (changeable in settings)
+            For {this.props.numPlayers} adventurer{this.props.numPlayers > 1 ? 's' : ''} (based on party size)
           </FlatButton>
           <TextField
             className="textfield"
@@ -135,7 +135,6 @@ class SearchSettingsCard extends React.Component<SearchSettingsCardProps, {}> {
             <MenuItem value={31536000} primaryText="Published this year"/>
             <MenuItem value={2592000} primaryText="Published this month"/>
             <MenuItem value={604800} primaryText="Published this week"/>
-            <MenuItem value={86400} primaryText="Published today"/>
           </SelectField>
           <SelectField
             className="selectfield"
@@ -209,7 +208,7 @@ export function truncateSummary(string: string): string {
 
 function renderResults(props: SearchProps, hideHeader?: boolean): JSX.Element {
   const orderField = props.search.order && props.search.order.substring(1);
-  const items: JSX.Element[] = props.results.map((result: QuestDetails, index: number) => {
+  const items: JSX.Element[] = (props.results || []).map((result: QuestDetails, index: number) => {
     let orderDetails = <span></span>;
     if (orderField) {
       const ratingCount = result.ratingcount || 0;
@@ -244,7 +243,7 @@ function renderResults(props: SearchProps, hideHeader?: boolean): JSX.Element {
       title="Quest Search Results"
       header={(hideHeader) ? undefined : <div className="searchHeader">
         <span>{props.results.length} quests for {props.numPlayers} <img className="inline_icon" src="images/adventurer_small.svg"/></span>
-        <Button className="filter_button" onTouchTap={() => props.onFilter()} remoteID="filter">Filter ></Button>
+        <Button className="filter_button" onTouchTap={() => props.onFilter()} remoteID="filter">Filter &amp; Sort ></Button>
       </div>}
     >
       {items.length === 0 && !props.searching &&
@@ -253,7 +252,7 @@ function renderResults(props: SearchProps, hideHeader?: boolean): JSX.Element {
           {!hideHeader && <div>Try broadening your search.</div>}
         </div>
       }
-      {items.length === 0 && props.searching && <div>Loading...</div>}
+      {items.length === 0 && props.searching && <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>}
       {items}
     </Card>
   );

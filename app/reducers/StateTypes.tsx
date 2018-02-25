@@ -129,8 +129,9 @@ export interface UserFeedbackState {
 }
 
 export interface RemotePlaySessionMeta {
+  id: number;
   questTitle: string;
-  peerCount: string;
+  peerCount: number;
   lastAction: string;
 }
 

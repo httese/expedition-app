@@ -6,7 +6,7 @@ import Card from './base/Card'
 import Button from './base/Button'
 import {getAppVersion} from'../Globals'
 import {SessionID} from 'expedition-qdl/lib/remote/Session'
-import {SettingsType, CardState, UserState, RemotePlayPhase, RemotePlayState} from '../reducers/StateTypes'
+import {SettingsType, CardState, UserState, RemotePlayPhase, RemotePlayState, RemotePlaySessionMeta} from '../reducers/StateTypes'
 
 const Moment = require('moment');
 
@@ -43,7 +43,7 @@ class RemotePlayConnect extends React.Component<RemotePlayProps, {}> {
   }
 
   render() {
-    const history = this.props.remotePlay.history.map((m: any, i: number) => {
+    const history = this.props.remotePlay.history.map((m: RemotePlaySessionMeta, i: number) => {
       return (
         <Button key={i} onTouchTap={()=>{this.props.onReconnect(this.props.user, m.id)}}>
           {m.questTitle} ({(m.peerCount) ? m.peerCount-1 : 0} peers) - {Moment(m.lastAction).fromNow()}

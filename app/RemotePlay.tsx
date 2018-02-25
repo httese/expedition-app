@@ -9,7 +9,7 @@ import {remotePlaySettings} from './Constants'
 const REMOTEPLAY_CLIENT_STATUS_POLL_MS = 5000;
 const CONNECTION_LOOP_MS = 200;
 const RETRY_DELAY_MS = 2000;
-const KEEPALIVE_MS = 20000;
+const STATUS_MS = 20000;
 const MAX_RETRIES = 2;
 
 // Max reconnect time is slot_time * 2^(slot_idx) + base = 10440 ms
@@ -51,7 +51,7 @@ export class RemotePlayClient extends ClientBase {
   private secret: string;
   private stats: RemotePlayCounters;
   private messageBuffer: {id: number, msg: string, retries: number, ts: number}[]
-  private lastSend: number;
+  private lastStatusMs: number;
 
   // Mirrors the committed counter on the websocket server.
   // Used to maintain a transactional event queue.
@@ -72,7 +72,7 @@ export class RemotePlayClient extends ClientBase {
         this.stats.errorEvents++;
       }
 
-      // Remove message from the buffer if it was acknowledged.
+      // Remove message from the retry buffer if it was acknowledged.
       if (e.id !== null) {
         for (let i = 0; i < this.messageBuffer.length; i++) {
           if (e.id === this.messageBuffer[i].id) {
@@ -93,6 +93,7 @@ export class RemotePlayClient extends ClientBase {
     this.committedEventCounter = 0;
     this.messageBuffer = [];
     this.reconnectAttempts = 0;
+    this.lastStatusMs = 0;
     this.stats = {...initialRemotePlayCounters};
   }
 
@@ -112,7 +113,6 @@ export class RemotePlayClient extends ClientBase {
           console.warn('Failed to get response for msg ' + b.id);
         } else {
           this.session.send(b.msg);
-          this.lastSend = now;
           b.retries++;
           b.ts = now;
           console.warn('Retrying msg ' + b.id);
@@ -120,21 +120,20 @@ export class RemotePlayClient extends ClientBase {
       }
     }
     
-    // Websocket timeout defaults to ~55 seconds. We send a periodic
-    // status to the server to keep it advised that we're still connected.
-    if (now - this.lastSend > KEEPALIVE_MS) {
+    // We send a periodic status to the server to keep it advised 
+    // of our connection and event ID state.
+    if (now - this.lastStatusMs > STATUS_MS) {
       this.sendStatus();
-      this.lastSend = now;
+      this.lastStatusMs = now;
     }
   }
 
-  // When transactions are rejected, we sometimes have to amend the
+  // When transactions are committed/rejected, we may need to to amend the
   // counter to get back on track.
   committedEvent(n: number) {
     this.localEventCounter = Math.max(this.localEventCounter, n);
     this.committedEventCounter = Math.max(this.committedEventCounter, n);
   }
-
   rejectedEvent(n: number) {
     this.localEventCounter = Math.min(this.localEventCounter, Math.max(this.committedEventCounter, n-1));
   }
@@ -266,8 +265,9 @@ export class RemotePlayClient extends ClientBase {
     }
     const msg = JSON.stringify(event);
     this.session.send(msg);
-    this.lastSend = start;
     if (event.id !== null) {
+      // If the event is transactional, push it onto the messageBuffer
+      // so we can retry sending it if needed.
       this.messageBuffer.push({id: event.id, msg, retries: 0, ts: Date.now()});
     }
   }

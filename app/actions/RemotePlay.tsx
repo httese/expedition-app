@@ -61,9 +61,6 @@ export function handleRemotePlayEvent(e: RemotePlayEvent) {
           // Note: This is still dispatched locally; it's called as a
           // secondary dispatch.
           dispatch(action);
-
-          // Notify inflight reducer in case it matche
-          dispatch({type: 'REMOTE_ACTION', id: e.id});
         }
         break;
       case 'ERROR':

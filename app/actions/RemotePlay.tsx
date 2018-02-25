@@ -25,9 +25,15 @@ export function handleRemotePlayEvent(e: RemotePlayEvent) {
     switch (e.event.type) {
       case 'INFLIGHT_COMMIT':
         dispatch({type: 'INFLIGHT_COMMIT', id: e.id});
+        if (e.id !== null) {
+          getRemotePlayClient().committedEvent(e.id);
+        }
         break;
       case 'INFLIGHT_REJECT':
         dispatch({type: 'INFLIGHT_REJECT', id: e.id, error: e.event.error});
+        if (e.id !== null) {
+          getRemotePlayClient().rejectedEvent(e.id);
+        }
         break;
       case 'STATUS':
         dispatch({
@@ -55,6 +61,9 @@ export function handleRemotePlayEvent(e: RemotePlayEvent) {
           // Note: This is still dispatched locally; it's called as a
           // secondary dispatch.
           dispatch(action);
+
+          // Notify inflight reducer in case it matche
+          dispatch({type: 'REMOTE_ACTION', id: e.id});
         }
         break;
       case 'ERROR':
@@ -164,7 +173,7 @@ export function loadRemotePlay(user: UserState) {
 export function setRemoteStatus(ev: StatusEvent) {
   return (dispatch: Redux.Dispatch<any>): any => {
     const c = getRemotePlayClient();
-    c.sendEvent(ev);
+    c.sendStatus(ev);
     dispatch({
       type: 'REMOTE_PLAY_CLIENT_STATUS',
       client: c.getID(),

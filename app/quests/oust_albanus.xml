@@ -77,11 +77,10 @@
             <p>"Ho, there!"</p>
             <choice text="Run towards the figure.">
               <roleplay title="" data-line="113">
-                <p>You run towards the figure, weapons still drawn and bloody. The person shouts for help; looks like you've got another fight on your hands.</p>
+                <p>You run towards the figure, weapons still drawn and bloody. Looks like you've got another fight on your hands.</p>
               </roleplay>
               <combat data-line="115">
                 <e>Captain</e>
-                <e>Brigand</e>
                 <event on="win" loot="false" xp="false">
                   <roleplay title="Albanus" data-line="122">
                     <p>As you slay the last man, you spot an insignia on the Captain's grubby clothes:</p>
@@ -151,7 +150,7 @@
         <e>Captain</e>
         <event on="win" loot="false" xp="false">
           <roleplay title="" data-line="210">
-            <p>Your eats still ringing from the explosion and exhausted from the fight, you slump to the ground and pass out.</p>
+            <p>Your ears still ringing from the explosion and exhausted from the fight, you slump to the ground and pass out.</p>
           </roleplay>
           <roleplay title="A Cheesy Ending" data-line="212">
             <p>Awakening some time later, you find yourself in Gruyere's apothecary house; the local herbalist took you in and treated your wounds, free of charge.</p>

@@ -1,5 +1,5 @@
 import * as Redux from 'redux'
-import {CardTransitioningAction, NavigateAction, ReturnAction, remoteify} from './ActionTypes'
+import {CardTransitioningAction, NavigateAction, remoteify} from './ActionTypes'
 import {AppStateWithHistory, CardName, CardPhase, CardState} from '../reducers/StateTypes'
 import {VIBRATION_LONG_MS, VIBRATION_SHORT_MS} from '../Constants'
 import {getNavigator} from '../Globals'
@@ -15,6 +15,7 @@ interface ToCardArgs {
 export const toCard = remoteify(function toCard(a: ToCardArgs, dispatch: Redux.Dispatch<any>, getState?: ()=>AppStateWithHistory): ToCardArgs {
   const nav = getNavigator();
   const state = (getState !== undefined) ? getState() : getStore().getState();
+  const questId = (state.quest && state.quest.details && state.quest.details.id) || null;
   const vibration = state.settings && state.settings.vibration;
   if (nav && nav.vibrate && vibration) {
     if (a.phase === 'TIMER') {
@@ -26,7 +27,17 @@ export const toCard = remoteify(function toCard(a: ToCardArgs, dispatch: Redux.D
   if (!a.noHistory) {
     dispatch({type: 'PUSH_HISTORY'});
   }
-  dispatch({type: 'NAVIGATE', to: {...a, ts: Date.now()}} as NavigateAction);
+
+  const keylist: string[] = [a.name];
+  if (a.phase) {
+    keylist.push(a.phase);
+  }
+  const line = state.quest && state.quest.node && state.quest.node.elem.attr('data-line');
+  if (line !== undefined) {
+    keylist.push('L' + line);
+  }
+
+  dispatch({type: 'NAVIGATE', to: {...a, ts: Date.now(), key: keylist.join('|'), questId}} as NavigateAction);
   return a;
 });
 

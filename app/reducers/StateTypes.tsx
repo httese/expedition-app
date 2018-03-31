@@ -44,6 +44,7 @@ export interface EndSettings {
 export type SearchPhase = 'DISCLAIMER' | 'SETTINGS' | 'DETAILS' | 'SEARCH' | 'PRIVATE';
 
 export interface SearchSettings {
+  id?: string;
   text?: string;
   age?: number;
   order?: string;
@@ -71,6 +72,7 @@ export interface SettingsType {
   autoRoll: boolean;
   contentSets: ContentSetsType;
   difficulty: DifficultyType;
+  experimental: boolean;
   fontSize: FontSizeType;
   multitouch: boolean;
   numPlayers: number;
@@ -92,8 +94,10 @@ export type CheckoutPhase = 'ENTRY' | 'DONE';
 export type CardName = 'CHECKOUT' | 'PLAYER_COUNT_SETTING' | 'QUEST_SETUP' | 'QUEST_END' | 'QUEST_CARD' | 'FEATURED_QUESTS' | 'SPLASH_CARD' | 'SEARCH_CARD' | 'SETTINGS' | 'ADVANCED' | 'REMOTE_PLAY';
 export type CardPhase = TemplatePhase | SearchPhase | RemotePlayPhase | CheckoutPhase;
 export interface CardState {
+  questId: string;
   name: CardName;
   ts: number;
+  key: string;
   transitioning?: boolean;
   phase: CardPhase|null;
   overrideDebounce?: boolean;
@@ -128,15 +132,21 @@ export interface UserFeedbackState {
   text: string;
 }
 
+export interface RemotePlaySessionType {
+  secret: string;
+  id: SessionID;
+}
+
 export interface RemotePlaySessionMeta {
   id: number;
+  secret: string;
   questTitle: string;
   peerCount: number;
   lastAction: string;
 }
 
 export interface RemotePlayState {
-  session: {secret: string, id: SessionID}|null;
+  session: RemotePlaySessionType|null;
   history: RemotePlaySessionMeta[];
   syncing: boolean;
   clientStatus: {[client: string]: StatusEvent};

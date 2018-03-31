@@ -35,6 +35,7 @@ interface MainProps extends React.Props<any> {}
 
 interface MainState {
   card: JSX.Element;
+  ts: number;
   key: string;
   theme: CardThemeType;
   transition: TransitionType;
@@ -66,6 +67,7 @@ export default class Main extends React.Component<MainProps, {}> {
     if (state === undefined || this.state === undefined || Object.keys(state).length === 0) {
       return {
         card: <SplashScreenContainer/>,
+        ts: 0,
         key: '',
         theme: 'LIGHT',
         transition: 'INSTANT' as TransitionType,
@@ -79,13 +81,14 @@ export default class Main extends React.Component<MainProps, {}> {
       return {...this.state, remotePlay: state.remotePlay};
     }
 
-    if (state.snackbar.open !== this.state.snackbar.open) {
+    if (state.snackbar && state.snackbar.open !== this.state.snackbar.open) {
       return {...this.state, snackbar: state.snackbar};
     }
 
     // After this point, only naviation-related state changes will result in a state change
-    const newKey = state.card && (state.card.ts + state.card.name);
-    if (!state.card || (this.state && newKey === this.state.key)) {
+    const newKey = state.card && (state.card.key);
+    const newTS = state.card && (state.card.ts);
+    if (!state.card || (this.state && newTS === this.state.ts && newKey === this.state.key)) {
       return this.state;
     }
 
@@ -154,6 +157,7 @@ export default class Main extends React.Component<MainProps, {}> {
 
     return {
       card,
+      ts: newTS,
       key: newKey,
       theme,
       transition,

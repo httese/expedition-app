@@ -18,7 +18,7 @@ export interface RemotePlayStateProps {
 
 export interface RemotePlayDispatchProps {
   onConnect: (user: UserState) => void;
-  onReconnect: (user: UserState, id: SessionID) => void;
+  onReconnect: (user: UserState, id: SessionID, secret: string) => void;
   onNewSessionRequest: (user: UserState) => void;
   onContinue: () => void;
 }
@@ -45,7 +45,7 @@ class RemotePlayConnect extends React.Component<RemotePlayProps, {}> {
   render() {
     const history = this.props.remotePlay.history.map((m: RemotePlaySessionMeta, i: number) => {
       return (
-        <Button key={i} onTouchTap={()=>{this.props.onReconnect(this.props.user, m.id)}}>
+        <Button key={i} onTouchTap={()=>{this.props.onReconnect(this.props.user, m.id, m.secret)}}>
           {m.questTitle} ({m.peerCount || 0} peers) - {Moment(m.lastAction).fromNow()}
         </Button>
       );
@@ -60,7 +60,7 @@ class RemotePlayConnect extends React.Component<RemotePlayProps, {}> {
           {history.length > 0 && <div className="helptext">You may also reconnect to these sessions:</div>}
           {history}
           <br/>
-          <p>You can have multiple people play off one device, with a maximum of 6 players across all devices. Each device / group will need a set of <a href="https://expeditiongame.com/store" target="_blank">Expedition cards</a> to play.</p>
+          <p>You can have multiple people play off one device, with a maximum of 6 players across all devices. Each device / group will need a set of <a href="#" onClick={() => window.open('https://expeditiongame.com/store?utm_source=app', '_blank')}>Expedition cards</a> to play.</p>
         </div>
       </Card>
     );

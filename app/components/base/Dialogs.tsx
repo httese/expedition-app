@@ -6,6 +6,8 @@ import TextField from 'material-ui/TextField'
 import {RemotePlayCounters} from '../../RemotePlay'
 import {ContentSetsType, DialogIDType, DialogState, QuestState, SettingsType, UserState, UserFeedbackState} from '../../reducers/StateTypes'
 import {QuestDetails} from '../../reducers/QuestTypes'
+import {openWindow} from '../../Globals'
+
 
 interface ExitQuestDialogProps extends React.Props<any> {
   open: boolean;
@@ -79,6 +81,7 @@ export class RemotePlayStatusDialog extends React.Component<RemotePlayStatusDial
         modal={true}
         contentClassName="dialog"
         open={Boolean(this.props.open)}
+        autoScrollBodyContent={true}
         actions={[<FlatButton onTouchTap={() => this.props.onRequestClose()}>Cancel</FlatButton>,
           <FlatButton className="primary" onTouchTap={() => this.props.onSendReport(this.props.user, this.props.questDetails, this.props.stats)}>Send Report</FlatButton>
         ]}
@@ -116,7 +119,7 @@ export class ExpansionSelectDialog extends React.Component<ExpansionSelectDialog
         <br/>
         <FlatButton className="primary large" onTouchTap={() => this.props.onExpansionSelect({horror: true})}><span className="line">Expedition</span> <span className="line">+ The Horror</span></FlatButton>
         <p style={{textAlign: 'center', marginTop: '1.5em'}}>This will only appear once, but you can always change it in Settings.</p>
-        <p style={{textAlign: 'center', marginTop: '1.5em'}}>Don't have the cards? <strong><a href="https://expeditiongame.com/store?utm_source=app" target="_blank">Get a copy</a></strong>.</p>
+        <p style={{textAlign: 'center', marginTop: '1.5em'}}>Don't have the cards? <strong><a href="#" onClick={() => openWindow('https://expeditiongame.com/store?utm_source=app')}>Get a copy</a></strong>.</p>
       </Dialog>
     );
   }

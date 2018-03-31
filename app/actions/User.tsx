@@ -1,4 +1,5 @@
 import Redux from 'redux'
+import * as Raven from 'raven-js'
 import {remoteify} from './ActionTypes'
 import {toCard} from './Card'
 import {handleFetchErrors} from './Web'
@@ -12,7 +13,6 @@ declare var gapi: any;
 declare var window: any;
 
 type UserLoginCallback = (user: UserState, err?: string) => any;
-
 
 function loadGapi(callback: (gapi: any, async: boolean) => void) {
   const gapi = getGapi();
@@ -64,6 +64,7 @@ function registerUserAndIdToken(user: {name: string, image: string, email: strin
     if (getGA()) {
       getGA().set({ userId: id });
     }
+    Raven.setUserContext({id});
     callback({
       loggedIn: true,
       id,

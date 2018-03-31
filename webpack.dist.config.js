@@ -14,17 +14,25 @@ const options = {
   },
   output: {
     path: __dirname + '/www/',
-    filename: 'bundle.js'
+    filename: 'bundle.js',
   },
   module: {
     loaders: [
       { test: /\.(ttf|eot|svg|png|gif|jpe?g|woff(2)?)(\?[a-z0-9=&.]+)?$/, loader : 'file-loader' },
       { test: /\.scss$/, loader: 'style-loader!css-loader!sass-loader' },
       { test: /\.json$/, loader: 'json-loader' },
-      { test: /\.tsx$/, loaders: ['react-hot-loader/webpack', 'awesome-typescript-loader'], exclude: /node_modules\/((?!expedition\-qdl).)*$/ },
-      { enforce: 'post', test: /\.tsx$/, loaders: ['babel-loader'], exclude: /node_modules\/((?!expedition\-qdl).)*$/ },
+      { test: /\.tsx$/, loaders: ['awesome-typescript-loader'], exclude: /node_modules\/((?!expedition\-qdl).)*$/ },
+      { enforce: 'post', test: /\.tsx$/, exclude: /node_modules\/((?!expedition\-qdl).)*$/, use: [{
+        loader: 'babel-loader',
+        options: {
+          presets: ["es2015", ["env", {
+            "targets": {"browsers": ["last 2 years", "last 3 iOS versions"]}
+          }]],
+        },
+      }]},
     ],
   },
+  devtool: 'source-map',
   plugins: [
     new webpack.DefinePlugin({
       'process.env': {
@@ -33,9 +41,11 @@ const options = {
         'API_HOST': JSON.stringify(process.env.API_HOST || 'http://betaapi.expeditiongame.com'),
       },
     }),
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // Don't import bloated Moment locales
     new webpack.optimize.ModuleConcatenationPlugin(),
     new webpack.optimize.AggressiveMergingPlugin(),
     new UglifyJsPlugin({
+      sourceMap: true,
       uglifyOptions: {
         mangle: {
           keep_fnames: true, // Critical for remote play / remoteify!
@@ -56,13 +66,6 @@ const options = {
       { from: { glob: 'node_modules/expedition-art/icons/*.svg' }, flatten: true, to: './images' },
       { from: { glob: 'node_modules/expedition-art/art/*.png' }, flatten: true, to: './images' },
     ]),
-    new webpack.LoaderOptionsPlugin({
-      options: {
-        babel: {
-          presets: ["es2015"]
-        },
-      },
-    }),
   ],
 };
 

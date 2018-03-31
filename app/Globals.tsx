@@ -1,3 +1,4 @@
+declare var cordova: any;
 declare var device: any;
 declare var ga: any;
 declare var gapi: any;
@@ -24,6 +25,11 @@ export interface ReactWindow extends Window {
     onTokenRefresh: (success: (token: string) => any, failure: (error: string) => any) => void,
     logEvent: (name: string, args: any) => any,
   };
+  cordova?: {
+    InAppBrowser?: {
+      open?: any;
+    }
+  }
   plugins?: {
     insomnia?: {keepAwake: ()=>void},
   };
@@ -40,6 +46,7 @@ const refs = {
   device: (typeof device !== 'undefined') ? device : {platform: null},
   ga: (typeof ga !== 'undefined') ? ga : null,
   gapi: (typeof gapi !== 'undefined') ? gapi : null,
+  history: (typeof history !== 'undefined') ? history : {pushState: () => {return null;}},
   navigator: (typeof navigator !== 'undefined') ? navigator : null,
 };
 
@@ -129,8 +136,23 @@ export function getGapi(): any {
   return refs.gapi;
 }
 
+export function getHistoryApi(): any {
+  return refs.history;
+}
+
 export function getNavigator(): any {
   return refs.navigator;
+}
+
+export function openWindow(url: string): any {
+  const platform = getDevicePlatform();
+  // Android is special; iOS and web use the same
+  if (platform === 'android') {
+    getNavigator().app.loadUrl(url, { openExternal: true });
+  } else {
+    const open = ((window.cordova || {}).InAppBrowser || {}).open || window.open;
+    open(url, '_system');
+  }
 }
 
 // Can't set it by default, since some browsers on high privacy throw an error when accessing window.localStorage

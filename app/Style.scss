@@ -711,6 +711,10 @@ span.line {
     }
   }
 
+  .anonymous_feedback {
+    padding: size(base) 0 size(large) 0 !important;
+  }
+
   .selectfield {
     margin-top: -6px;
     width: 100% !important;
@@ -1185,8 +1189,8 @@ span.line {
     & > div {
       background: url(images/papyrus-tiled.jpg) !important;
     }
-    button {
-      padding: 0px 10px !important;
+    .base_picker, .base_checkbox {
+      color: $font_color_primary !important;
     }
   }
 

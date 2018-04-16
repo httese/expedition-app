@@ -21,7 +21,7 @@ export const remotePlaySettings = {
   newSessionURI: API_HOST + '/remoteplay/v1/new_session',
   connectURI: API_HOST + '/remoteplay/v1/connect',
   firstLoadURI: API_HOST + '/remoteplay/v1/user',
-  websocketSession: 'ws://' + splitURL[splitURL.length-1] + '/ws/remoteplay/v1/session',
+  websocketSession: ((NODE_ENV === 'production') ? 'wss://' : 'ws://') + splitURL[splitURL.length-1] + '/ws/remoteplay/v1/session',
 };
 
 export const FEATURED_QUESTS: QuestDetails[] = [ // Featured quest ids generated from publishing, but don't leave them published!
@@ -39,7 +39,7 @@ export const MAX_ADVENTURER_HEALTH = 12;
 export const MIN_FEEDBACK_LENGTH = 16;
 export const SUMMARY_MAX_LENGTH = 140; // length of a tweet
 
-export const UNSUPPORTED_BROWSERS = /^(.*Amazon Silk.*)$/i;
+export const UNSUPPORTED_BROWSERS = /^(.*amazon silk.*)|(.*(iphone|ipad|ipod|ios) os 9_.*)$/i;
 
 export const URLS = {
   android: 'https://play.google.com/store/apps/details?id=io.fabricate.expedition',
@@ -109,6 +109,16 @@ export const GENRES: GenreType[] = [
   'Horror',
   'Mystery',
   'Romance'
+];
+
+export type LanguageType = 'English' | 'French' | 'German' | 'Italian' | 'Portuguese' | 'Spanish';
+export const LANGUAGES: LanguageType[] = [
+  'English',
+  'French',
+  'German',
+  'Italian',
+  'Portuguese',
+  'Spanish'
 ];
 
 // Content rating options and their definitions, generally based on MPAA guidelines

@@ -29,7 +29,7 @@ export interface CheckoutState {
   stripe: stripe.Stripe|null;
 }
 
-export type DialogIDType = null | 'EXIT_QUEST' | 'EXPANSION_SELECT' | 'EXIT_REMOTE_PLAY' | 'FEEDBACK' | 'REPORT_ERROR' | 'REPORT_QUEST' | 'REMOTE_PLAY_STATUS';
+export type DialogIDType = null | 'EXIT_QUEST' | 'EXPANSION_SELECT' | 'EXIT_REMOTE_PLAY' | 'FEEDBACK' | 'REPORT_ERROR' | 'REPORT_QUEST' | 'REMOTE_PLAY_STATUS' | 'SET_PLAYER_COUNT';
 export interface DialogState {
   open: DialogIDType;
   message?: string;
@@ -130,6 +130,7 @@ export interface UserFeedbackState {
   type: 'feedback' | 'rating' | 'report_error' | 'report_quest';
   rating?: number;
   text: string;
+  anonymous: boolean;
 }
 
 export interface RemotePlaySessionType {

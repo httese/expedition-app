@@ -1,6 +1,6 @@
 {
   "name": "expedition-app",
-  "version": "1.14.4",
+  "version": "1.15.1",
   "description": "The App for Expedition: The Roleplaying Card Game",
   "homepage": "http://expeditiongame.com",
   "bugs": "https://github.com/ExpeditionRPG/expedition-app/issues",
@@ -40,7 +40,6 @@
     "babel-plugin-transform-proto-to-assign": "^6.9.0",
     "babel-polyfill": "^6.22.0",
     "babel-preset-env": "^1.6.1",
-    "babel-preset-es2015": "^6.16.0",
     "browser-sync": "^2.7.7",
     "copy-webpack-plugin": "^4.1.1",
     "css-loader": "^0.28.1",
@@ -121,7 +120,7 @@
     "nomnom": "^1.8.1",
     "parser": "^0.1.4",
     "promise-polyfill": "^6.0.2",
-    "raven-js": "^3.23.3",
+    "raven-js": "^3.24.0",
     "react": "^15.4.2",
     "react-addons-css-transition-group": "^15.3.2",
     "react-addons-test-utils": "^15.4.1",
@@ -171,5 +170,6 @@
       "android",
       "ios"
     ]
-  }
+  },
+  "snyk": false
 }

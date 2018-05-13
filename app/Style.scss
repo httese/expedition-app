@@ -719,10 +719,16 @@ span.line {
     margin-top: -6px;
     width: 100% !important;
     font-size: fontsize(flavor) !important;
+    color: black !important;
 
     label {
+      color: black !important;
       font-size: fontsize(label) !important;
       transform: scale(1) translate(0px, -28px) !important;
+    }
+
+    svg {
+      fill: black !important;
     }
 
     &.halfLeft {
@@ -1056,9 +1062,26 @@ span.line {
     }
   }
 
+  .audioControls {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    opacity: 0.8;
+    #audioLoadingIndicator {
+      -webkit-animation: rotate 4s;
+         -moz-animation: rotate 4s;
+          -ms-animation: rotate 4s;
+           -o-animation: rotate 4s;
+              animation: rotate 4s;
+    }
+  }
+
   .questButtonWithIcon, .questButton, .searchResult {
     padding-left: size(base);
     padding-right: size(base);
+    &.played {
+      opacity: 0.65;
+    }
     .title {
       line-height: $lineheight;
       font-family: $headerFont;
@@ -1093,6 +1116,13 @@ span.line {
         height: fontsize(flavor);
       }
     }
+    .expansions {
+      opacity: 0.65;
+      float: left;
+      .inline_icon {
+        padding-right: size(small);
+      }
+    }
     .searchOrderDetail {
       opacity: 0.65;
       font-size: fontsize(flavor);
@@ -1124,6 +1154,16 @@ span.line {
         }
       }
     }
+    .indicators {
+      position: absolute;
+      top: size(base);
+      right: size(base);
+      opacity: 0.65;
+      svg {
+        height: fontsize(interactive) !important;
+        width: fontsize(interactive) !important;
+      }
+    }
   }
   .questButtonWithIcon {
     .inline_icon {
@@ -1133,17 +1173,37 @@ span.line {
 
   .searchDetails {
     text-align: center;
-    margin-top: size(large);
+    margin-top: size(base);
     margin-bottom: size(large);
 
     .author {
       padding-top: size(small);
       font-style: italic;
     }
+
+    .indicators {
+      opacity: 0.65;
+      padding-top: size(small);
+      svg {
+        height: fontsize(flavor) !important;
+        width: fontsize(flavor) !important;
+      }
+    }
   }
 
   .searchDetailsExtended {
     margin-top: size(large);
+    .searchDetailsTable {
+      width: 100%;
+      table-layout:fixed;
+      th {
+        text-align: left;
+        max-width: 50%;
+      }
+      td {
+        text-align: left;
+      }
+    }
   }
 
   .reportCategory {
@@ -1163,6 +1223,11 @@ span.line {
     button:disabled {
       color: $font_color_primary !important;
     }
+  }
+
+  .searchDescription {
+    text-align: center;
+    margin: size(small) 0;
   }
 
   .ratingDescription {
@@ -1349,6 +1414,19 @@ $fontsizemap: (
 @-ms-keyframes fadein {
   from { opacity: 0; }
   to   { opacity: 1; }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+@-webkit-keyframes rotate {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
+}
+@-ms-keyframes rotate {
+  from { transform: rotate(0); }
+  to   { transform: rotate(360deg); }
 }
 
 @keyframes lds-ellipsis1 {

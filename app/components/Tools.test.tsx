@@ -13,7 +13,7 @@ function setup() {
     onCustomCombatSelect: jasmine.createSpy('onCustomCombatSelect'),
     onQuestCreatorSelect: jasmine.createSpy('onQuestCreatorSelect'),
     onPrivateQuestsSelect: jasmine.createSpy('onPrivateQuestsSelect'),
-    onRemotePlaySelect: jasmine.createSpy('onRemotePlaySelect'),
+    onMultiplayerSelect: jasmine.createSpy('onMultiplayerSelect'),
     testMusic: jasmine.createSpy('testMusic'),
     testMusicRandom: jasmine.createSpy('testMusicRandom'),
     testMusicStop: jasmine.createSpy('testMusicStop'),
@@ -26,7 +26,7 @@ function setup() {
 describe('Tools', () => {
   it('calls onCustomCombatSelect on custom combat select', () => {
     const {props, enzymeWrapper} = setup();
-    const button = enzymeWrapper.find('#selectCustomCombat').simulate('touchTap');
+    enzymeWrapper.find('#selectCustomCombat').simulate('touchTap');
     expect(props.onCustomCombatSelect).toHaveBeenCalledTimes(1);
   });
 });

@@ -1,13 +1,12 @@
 import Redux from 'redux'
-import {NODE_ENV} from '../Constants'
+import {NODE_ENV, UNSUPPORTED_BROWSERS} from '../Constants'
+import {getNavigator} from '../Globals'
 import {ContentSetsType, DifficultyType, FontSizeType, SettingsType} from './StateTypes'
 import {ChangeSettingsAction} from '../actions/ActionTypes'
 import {getStorageBoolean, getStorageJson, getStorageNumber, getStorageString, setStorageKeyValue} from '../Globals'
 
-// TODO reduce redundancy by setting initial value to default,
-// and then looping over with the getStorage based on key + type
 export const initialSettings: SettingsType = {
-  audioEnabled: getStorageBoolean('audioEnabled', true),
+  audioEnabled: getStorageBoolean('audioEnabled', false),
   autoRoll: getStorageBoolean('autoRoll', false),
   contentSets: getStorageJson('contentSets', {horror: null}) as ContentSetsType,
   difficulty: getStorageString('difficulty', 'NORMAL') as DifficultyType,

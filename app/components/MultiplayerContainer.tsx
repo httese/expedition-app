@@ -3,11 +3,12 @@ import {connect} from 'react-redux'
 import {toCard} from '../actions/Card'
 import {AppState, UserState} from '../reducers/StateTypes'
 import {openSnackbar} from '../actions/Snackbar'
-import {remotePlayConnect, remotePlayNewSession} from '../actions/RemotePlay'
-import RemotePlay, {RemotePlayStateProps, RemotePlayDispatchProps} from './RemotePlay'
-import {SessionID} from 'expedition-qdl/lib/remote/Session'
+import {multiplayerConnect, multiplayerNewSession} from '../actions/Multiplayer'
+import Multiplayer, {MultiplayerStateProps, MultiplayerDispatchProps} from './Multiplayer'
+import {SessionID} from 'expedition-qdl/lib/multiplayer/Session'
+import {logEvent} from '../Main'
 
-const mapStateToProps = (state: AppState, ownProps: RemotePlayStateProps): RemotePlayStateProps => {
+const mapStateToProps = (state: AppState, ownProps: MultiplayerStateProps): MultiplayerStateProps => {
   return {
     phase: ownProps.phase,
     user: state.user,
@@ -15,30 +16,31 @@ const mapStateToProps = (state: AppState, ownProps: RemotePlayStateProps): Remot
   };
 }
 
-const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): RemotePlayDispatchProps => {
+const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): MultiplayerDispatchProps => {
   return {
     onConnect: (user: UserState) => {
       const secret = window.prompt('Enter the session\'s 4 character code to join.');
       if (secret === null || secret.length !== 4) {
         return dispatch(openSnackbar('Please enter the full session code (4 characters)'));
       }
-      return dispatch(remotePlayConnect(user, secret.toUpperCase()));
+      return dispatch(multiplayerConnect(user, secret.toUpperCase()));
     },
     onReconnect: (user: UserState, id: SessionID, secret: string) => {
-      dispatch(remotePlayConnect(user, secret.toUpperCase()));
+      dispatch(multiplayerConnect(user, secret.toUpperCase()));
     },
     onNewSessionRequest: (user: UserState) => {
-      return dispatch(remotePlayNewSession(user));
+      return dispatch(multiplayerNewSession(user));
     },
     onContinue: () => {
+      logEvent('MULTIPLAYER_session_start', {});
       dispatch(toCard({name: 'FEATURED_QUESTS'}));
     },
   };
 }
 
-const RemotePlayContainer = connect(
+const MultiplayerContainer = connect(
   mapStateToProps,
   mapDispatchToProps
-)(RemotePlay);
+)(Multiplayer);
 
-export default RemotePlayContainer
+export default MultiplayerContainer

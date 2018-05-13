@@ -2,9 +2,9 @@ import * as Redux from 'redux'
 import {QuestDetails} from './QuestTypes'
 import {TemplatePhase, TemplateContext} from '../cardtemplates/TemplateTypes'
 import {ParserNode} from '../cardtemplates/TemplateTypes'
-import {SessionID} from 'expedition-qdl/lib/remote/Session'
-import {StatusEvent} from 'expedition-qdl/lib/remote/Events'
-import {GenreType, ContentRatingLabelType} from '../Constants'
+import {SessionID} from 'expedition-qdl/lib/multiplayer/Session'
+import {StatusEvent} from 'expedition-qdl/lib/multiplayer/Events'
+import {GenreType, ContentRatingLabelType, LanguageType} from '../Constants'
 
 export interface AnnouncementState {
   open: boolean;
@@ -12,7 +12,9 @@ export interface AnnouncementState {
   link: string;
 }
 
+export type AudioLoadingType = false | 'LOADING' | 'ERROR' | true;
 export interface AudioState {
+  loaded: AudioLoadingType;
   paused: boolean;
   intensity: number;
   peakIntensity: number;
@@ -29,7 +31,7 @@ export interface CheckoutState {
   stripe: stripe.Stripe|null;
 }
 
-export type DialogIDType = null | 'EXIT_QUEST' | 'EXPANSION_SELECT' | 'EXIT_REMOTE_PLAY' | 'FEEDBACK' | 'REPORT_ERROR' | 'REPORT_QUEST' | 'REMOTE_PLAY_STATUS' | 'SET_PLAYER_COUNT';
+export type DialogIDType = null | 'EXIT_QUEST' | 'EXPANSION_SELECT' | 'EXIT_REMOTE_PLAY' | 'FEEDBACK' | 'REPORT_ERROR' | 'REPORT_QUEST' | 'MULTIPLAYER_STATUS' | 'SET_PLAYER_COUNT' | 'DELETE_SAVED_QUEST';
 export interface DialogState {
   open: DialogIDType;
   message?: string;
@@ -44,6 +46,7 @@ export interface EndSettings {
 export type SearchPhase = 'DISCLAIMER' | 'SETTINGS' | 'DETAILS' | 'SEARCH' | 'PRIVATE';
 
 export interface SearchSettings {
+  [index:string]: any;
   id?: string;
   text?: string;
   age?: number;
@@ -56,6 +59,7 @@ export interface SearchSettings {
   owner?: string;
   partition?: 'expedition-public' | 'expedition-private';
   expansions?: ExpansionsType[];
+  language?: LanguageType;
 }
 
 export type DifficultyType = 'EASY' | 'NORMAL' | 'HARD' | 'IMPOSSIBLE';
@@ -97,10 +101,10 @@ export interface SavedQuestMeta {
 
 export type SavedQuestsPhase = 'LIST' | 'DETAILS';
 
-export type RemotePlayPhase = 'CONNECT'|'LOBBY';
+export type MultiplayerPhase = 'CONNECT'|'LOBBY';
 export type CheckoutPhase = 'ENTRY' | 'DONE';
 export type CardName = 'SAVED_QUESTS' | 'CHECKOUT' | 'PLAYER_COUNT_SETTING' | 'QUEST_SETUP' | 'QUEST_END' | 'QUEST_CARD' | 'FEATURED_QUESTS' | 'SPLASH_CARD' | 'SEARCH_CARD' | 'SETTINGS' | 'ADVANCED' | 'REMOTE_PLAY';
-export type CardPhase = TemplatePhase | SearchPhase | RemotePlayPhase | CheckoutPhase | SavedQuestsPhase;
+export type CardPhase = TemplatePhase | SearchPhase | MultiplayerPhase | CheckoutPhase | SavedQuestsPhase;
 export interface CardState {
   questId: string;
   name: CardName;
@@ -131,7 +135,11 @@ export interface SearchState {
   searching: boolean;
 }
 
-
+export interface UserQuestsType {
+  [questId:string]: {
+    lastPlayed: Date;
+  };
+}
 
 export interface UserState {
   loggedIn: boolean;
@@ -139,6 +147,7 @@ export interface UserState {
   name: string;
   image: string;
   email: string;
+  quests: UserQuestsType;
 }
 
 export interface UserFeedbackState {
@@ -148,12 +157,12 @@ export interface UserFeedbackState {
   anonymous: boolean;
 }
 
-export interface RemotePlaySessionType {
+export interface MultiplayerSessionType {
   secret: string;
   id: SessionID;
 }
 
-export interface RemotePlaySessionMeta {
+export interface MultiplayerSessionMeta {
   id: number;
   secret: string;
   questTitle: string;
@@ -161,9 +170,9 @@ export interface RemotePlaySessionMeta {
   lastAction: string;
 }
 
-export interface RemotePlayState {
-  session: RemotePlaySessionType|null;
-  history: RemotePlaySessionMeta[];
+export interface MultiplayerState {
+  session: MultiplayerSessionType|null;
+  history: MultiplayerSessionMeta[];
   syncing: boolean;
   clientStatus: {[client: string]: StatusEvent};
 }
@@ -189,7 +198,7 @@ export interface AppStateBase {
 
 export interface AppState extends AppStateBase {
   settings: SettingsType;
-  remotePlay: RemotePlayState;
+  remotePlay: MultiplayerState;
   saved: SavedQuestState;
 }
 

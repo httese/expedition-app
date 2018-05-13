@@ -1,5 +1,5 @@
 import * as React from 'react'
-
+import AudioControlsContainer from '../../components/base/AudioControlsContainer'
 import Button from '../../components/base/Button'
 import Callout from '../../components/base/Callout'
 import Card from '../../components/base/Card'
@@ -9,7 +9,7 @@ import theme from '../../Theme'
 import {MAX_ADVENTURER_HEALTH} from '../../Constants'
 import REGEX from 'expedition-qdl/lib/Regex'
 import {isSurgeNextRound} from './Actions'
-import {SettingsType, CardState, CardName, RemotePlayState} from '../../reducers/StateTypes'
+import {SettingsType, CardState, CardName, MultiplayerState} from '../../reducers/StateTypes'
 import {ParserNode} from '../TemplateTypes'
 import {EventParameters, Enemy, Loot} from '../../reducers/QuestTypes'
 import {CombatPhase, CombatState} from './Types'
@@ -23,7 +23,7 @@ export interface CombatStateProps {
   node: ParserNode;
   seed: string;
   victoryParameters?: EventParameters;
-  remotePlayState?: RemotePlayState;
+  remotePlayState?: MultiplayerState;
   tier: number;
   numAliveAdventurers: number;
   mostRecentRolls?: number[];
@@ -56,6 +56,7 @@ const numerals: {[k: number]: string;} = {
   5: 'V',
 };
 
+
 function renderSelectTier(props: CombatProps): JSX.Element {
   const nextCard = (props.settings.timerSeconds) ? 'PREPARE' : 'NO_TIMER';
   return (
@@ -68,6 +69,7 @@ function renderSelectTier(props: CombatProps): JSX.Element {
         Set this to the combined tier you wish to fight.
       </Picker>
       <Button onTouchTap={() => props.onNext(nextCard)} disabled={props.tier <= 0}>Next</Button>
+      <AudioControlsContainer />
     </Card>
   );
 }
@@ -119,6 +121,7 @@ function renderDrawEnemies(props: CombatProps): JSX.Element {
       {enemies}
       {helpText}
       <Button onTouchTap={() => props.onNext(nextCard)}>Next</Button>
+      <AudioControlsContainer />
     </Card>
   );
 }

@@ -50,23 +50,25 @@ import theme from './Theme'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import getMuiTheme from 'material-ui/styles/getMuiTheme'
 
-import {authSettings, NODE_ENV, UNSUPPORTED_BROWSERS} from './Constants'
+import {authSettings, NODE_ENV, UNSUPPORTED_BROWSERS, URLS} from './Constants'
 import {fetchAnnouncements, setAnnouncement} from './actions/Announcement'
 import {audioPause, audioResume} from './actions/Audio'
 import {toPrevious} from './actions/Card'
 import {setDialog} from './actions/Dialog'
 import {searchAndPlay} from './actions/Search'
+import {changeSettings} from './actions/Settings'
 import {openSnackbar} from './actions/Snackbar'
 import {silentLogin} from './actions/User'
 import {listSavedQuests} from './actions/SavedQuests'
+import {handleFetchErrors} from './actions/Web'
 import {getStore} from './Store'
-import {getAppVersion, getWindow, getGA, getDevicePlatform, getDocument, getNavigator, setGA, setupPolyfills} from './Globals'
-import {getRemotePlayClient} from './RemotePlay'
+import {getAppVersion, getWindow, getGA, getDevicePlatform, getDocument, getNavigator, getStorageBoolean, setGA, setupPolyfills} from './Globals'
+import {getMultiplayerClient} from './Multiplayer'
 import {UserState} from './reducers/StateTypes'
-import {RemotePlayEvent} from 'expedition-qdl/lib/remote/Events'
+import {MultiplayerEvent} from 'expedition-qdl/lib/multiplayer/Events'
 
 // Thunk is unused, but necessary to prevent compiler errors
-// until types are fixed for remote play.
+// until types are fixed for multiplayer.
 // TODO: Fix redux types
 import thunk from 'redux-thunk'
 
@@ -77,7 +79,8 @@ Raven.config(authSettings.raven, {
     release: getAppVersion(),
     environment: NODE_ENV,
     shouldSendCallback(data) {
-      return !UNSUPPORTED_BROWSERS.test(getNavigator().userAgent);
+      const supportedBrowser = !UNSUPPORTED_BROWSERS.test(getNavigator().userAgent);
+      return supportedBrowser && NODE_ENV !== 'dev' && !getStore().getState().settings.simulator;
     }
   }).install();
 
@@ -91,7 +94,7 @@ function setupTapEvents() {
 
 // TODO record modal views as users navigate: ReactGA.modalview('/about/contact-us');
 // likely as a separate logView or logNavigate or something
-export function logEvent(name: string, argsInput: any): void {
+export function logEvent(name: string, argsInput: {[key: string]: any}): void {
   const ga = getGA();
   if (ga) {
     ga.event({
@@ -117,10 +120,16 @@ export function logEvent(name: string, argsInput: any): void {
 
 function setupDevice() {
   const window = getWindow();
-
-  // Apply class-specific styling
   const platform = getDevicePlatform();
+  // Platform-specific styles
   document.body.className += ' ' + platform;
+  // Default to audio enabled if not user specified in pre-bundled apps
+  // since the audio files are already part of the APK
+  // (unless the app is using an old / unsupported browser engine)
+  getStore().dispatch(changeSettings({
+    audioEnabled: getStorageBoolean('audioEnabled', !UNSUPPORTED_BROWSERS.test(getNavigator().userAgent)),
+  }));
+
 
   if (platform === 'android') {
 
@@ -235,6 +244,7 @@ export function init() {
     window.onerror = function(message: string, source: string, line: number) {
       const state = getStore().getState();
       const quest = state.quest || {};
+      const settings = state.settings || {};
       const questNode = quest.node && quest.node.elem && quest.node.elem[0];
       Raven.setExtraContext({
         card: state.card.key,
@@ -242,7 +252,12 @@ export function init() {
         questId: quest.details.id,
         questCardTitle: (questNode) ? questNode.attribs.title : '',
         questLine: (questNode) ? questNode.attribs['data-line'] : '',
-        settings: JSON.stringify(state.settings),
+        settings: JSON.stringify(settings),
+      });
+      Raven.setTagsContext(); // Clear any existing tags
+      Raven.setTagsContext({
+        audio: settings.audioEnabled,
+        remotePlay: state.remotePlay.session !== null,
       });
       Raven.captureException(new Error(message));
       if (quest.details.id) {
@@ -275,8 +290,7 @@ export function init() {
       }, 0);
     }
 
-    // Setup as web platform as default; we might find out later we're an app
-    window.platform = 'web';
+    window.platform = window.cordova ? 'cordova' : 'web';
     window.onpopstate = function(e) {
       getStore().dispatch(toPrevious({}));
       e.preventDefault();

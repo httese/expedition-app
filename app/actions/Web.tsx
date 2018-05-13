@@ -7,16 +7,16 @@ import {login} from './User'
 import {setAnnouncement} from './Announcement'
 import {openSnackbar} from './Snackbar'
 import {userFeedbackClear} from './UserFeedback'
-import {SettingsType, QuestState, UserState, UserFeedbackState} from '../reducers/StateTypes'
+import {SettingsType, UserQuestsType, QuestState, UserState, UserFeedbackState} from '../reducers/StateTypes'
 import {QuestDetails} from '../reducers/QuestTypes'
 import {getDevicePlatform, getPlatformDump, getAppVersion} from '../Globals'
 import {logEvent} from '../Main'
 import {getStore} from '../Store'
 import {TemplateContext, ParserNode} from '../cardtemplates/TemplateTypes'
 import {defaultContext} from '../cardtemplates/Template'
-import {remoteify} from './ActionTypes'
+import {remoteify, UserQuestsAction} from './ActionTypes'
 import {MIN_FEEDBACK_LENGTH} from '../Constants'
-import {RemotePlayCounters} from '../RemotePlay'
+import {MultiplayerCounters} from '../Multiplayer'
 import {getLogBuffer} from '../Console'
 
 declare var window:any;
@@ -37,6 +37,26 @@ export function fetchLocal(url: string) {
     request.open('GET', url);
     request.send();
   });
+}
+
+export function fetchUserQuests() {
+  return (dispatch: Redux.Dispatch<any>) => {
+    fetch(authSettings.urlBase + '/user/quests', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'text/plain',
+      },
+    })
+    .then(handleFetchErrors)
+    .then((response: Response) => response.json())
+    .then((quests: UserQuestsType) => {
+      dispatch({type: 'USER_QUESTS', quests} as UserQuestsAction);
+    })
+    .catch((error: Error) => {
+      console.error('Request for quest plays failed', error);
+    });
+  }
 }
 
 export const fetchQuestXML = remoteify(function fetchQuestXML(details: QuestDetails, dispatch: Redux.Dispatch<any>) {
@@ -192,7 +212,7 @@ function postUserFeedback(type: string, data: any) {
   };
 }
 
-export function logRemotePlayStats(user: UserState, quest: QuestDetails, stats: RemotePlayCounters): Promise<Response> {
+export function logMultiplayerStats(user: UserState, quest: QuestDetails, stats: MultiplayerCounters): Promise<Response> {
   try {
     const state = getStore().getState();
     const data = {
@@ -207,7 +227,7 @@ export function logRemotePlayStats(user: UserState, quest: QuestDetails, stats: 
       console: getLogBuffer(),
     };
 
-    return fetch(authSettings.urlBase + '/analytics/remoteplay/stats', {
+    return fetch(authSettings.urlBase + '/analytics/multiplayer/stats', {
         method: 'POST',
         body: JSON.stringify(data),
       })
@@ -216,7 +236,7 @@ export function logRemotePlayStats(user: UserState, quest: QuestDetails, stats: 
         logEvent('analytics_quest_err', { label: error });
       });
   } catch(e) {
-    console.error('Failed to log remote play stats');
+    console.error('Failed to log multiplayer stats');
     return Promise.resolve(new Response(''));
   }
 }

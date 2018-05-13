@@ -4,27 +4,29 @@ import {connect} from 'react-redux'
 import Dialogs, {DialogsStateProps, DialogsDispatchProps} from './Dialogs'
 import {toPrevious} from '../../actions/Card'
 import {setDialog} from '../../actions/Dialog'
+import {deleteSavedQuest} from '../../actions/SavedQuests'
 import {openSnackbar} from '../../actions/Snackbar'
 import {changeSettings} from '../../actions/Settings'
-import {remotePlayDisconnect} from '../../actions/RemotePlay'
+import {remotePlayDisconnect} from '../../actions/Multiplayer'
 import {userFeedbackChange} from '../../actions/UserFeedback'
-import {submitUserFeedback, logRemotePlayStats, fetchQuestXML} from '../../actions/Web'
+import {submitUserFeedback, logMultiplayerStats, fetchQuestXML} from '../../actions/Web'
 import {MIN_FEEDBACK_LENGTH} from '../../Constants'
-import {getRemotePlayClient, RemotePlayCounters, initialRemotePlayCounters} from '../../RemotePlay'
-import {AppState, ContentSetsType, DialogIDType, DialogState, SettingsType, QuestState, UserState, UserFeedbackState} from '../../reducers/StateTypes'
+import {getMultiplayerClient, MultiplayerCounters, initialMultiplayerCounters} from '../../Multiplayer'
+import {AppState, ContentSetsType, DialogIDType, DialogState, SavedQuestMeta, SettingsType, QuestState, UserState, UserFeedbackState} from '../../reducers/StateTypes'
 import {QuestDetails} from '../../reducers/QuestTypes'
 
 const mapStateToProps = (state: AppState, ownProps: any): DialogsStateProps => {
-  let remotePlayStats: RemotePlayCounters;
-  if (state.dialog && state.dialog.open === 'REMOTE_PLAY_STATUS') {
-    remotePlayStats = getRemotePlayClient().getStats();
+  let remotePlayStats: MultiplayerCounters;
+  if (state.dialog && state.dialog.open === 'MULTIPLAYER_STATUS') {
+    remotePlayStats = getMultiplayerClient().getStats();
   } else {
-    remotePlayStats = initialRemotePlayCounters;
+    remotePlayStats = initialMultiplayerCounters;
   }
 
   return {
     dialog: state.dialog,
     quest: state.quest || {details: {}} as any,
+    selectedSave: state.saved.selected || {} as SavedQuestMeta,
     settings: state.settings,
     user: state.user,
     remotePlayStats,
@@ -34,11 +36,16 @@ const mapStateToProps = (state: AppState, ownProps: any): DialogsStateProps => {
 
 const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): DialogsDispatchProps => {
   return {
+    onDeleteSavedQuest: (savedQuest: SavedQuestMeta) => {
+      dispatch(deleteSavedQuest(savedQuest.details.id, savedQuest.ts));
+      dispatch(toPrevious({name: 'SAVED_QUESTS', phase: 'LIST', before: false}));
+      dispatch(openSnackbar('Save deleted.'));
+    },
     onExitQuest: () => {
       dispatch(setDialog(null));
       dispatch(toPrevious({name: 'SPLASH_CARD', before: false}));
     },
-    onExitRemotePlay: () => {
+    onExitMultiplayer: () => {
       dispatch(remotePlayDisconnect());
       dispatch(setDialog(null));
       dispatch(toPrevious({name: 'SPLASH_CARD', before: false}));
@@ -46,8 +53,8 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Dialo
     onMultitouchChange: (v: boolean) => {
       dispatch(changeSettings({multitouch: v}));
     },
-    onSendRemotePlayReport: (user: UserState, quest: QuestDetails, stats: RemotePlayCounters) => {
-      logRemotePlayStats(user, quest, stats)
+    onSendMultiplayerReport: (user: UserState, quest: QuestDetails, stats: MultiplayerCounters) => {
+      logMultiplayerStats(user, quest, stats)
         .then((r: Response) => {
           dispatch(openSnackbar('Stats submitted. Thank you!'));
           dispatch(setDialog(null));

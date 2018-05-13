@@ -1,4 +1,4 @@
-describe('RemotePlay actions', () => {
+describe('Multiplayer actions', () => {
   describe('routeEvent', () => {
     it('does not dispatch INTERACTION events');
     it('resolves and dispatches ACTION events');
@@ -9,17 +9,17 @@ describe('RemotePlay actions', () => {
     it('rejects ACTIONs when id is not an increment');
   });
 
-  describe('remotePlayNewSession', () => {
+  describe('multiplayerNewSession', () => {
     it('creates a new session');
     it('catches and logs web errors');
   });
 
-  describe('remotePlayConnect', () => {
+  describe('multiplayerConnect', () => {
     it('connects to a session');
     it('catches and logs web errors');
   });
 
-  describe('loadRemotePlay', () => {
+  describe('loadMultiplayer', () => {
     it('fetches past sessions by user id');
     it('catches and logs web errors');
   });

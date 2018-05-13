@@ -1,6 +1,5 @@
 import Redux from 'redux'
 import {connect} from 'react-redux'
-
 import Combat, {CombatStateProps, CombatDispatchProps} from './Combat'
 import {toPrevious, toCard} from '../../actions/Card'
 import {handleCombatTimerStart, handleCombatTimerHold, handleCombatTimerStop, tierSumDelta, adventurerDelta, handleCombatEnd, midCombatChoice, handleResolvePhase, generateCombatTemplate} from './Actions'
@@ -12,7 +11,7 @@ import {CombatPhase} from './Types'
 import {MAX_ADVENTURER_HEALTH} from '../../Constants'
 import {logEvent} from '../../Main'
 import {TemplateContext, ParserNode} from '../TemplateTypes'
-import {getRemotePlayClient} from '../../RemotePlay'
+import {getMultiplayerClient} from '../../Multiplayer'
 import {getStore} from '../../Store'
 
 declare var window:any;
@@ -112,13 +111,13 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
       //dispatch(handleCombatTimerHeld({node}));
     },
     onTimerStop: (node: ParserNode, settings: SettingsType, elapsedMillis: number, surge: boolean, seed: string) => {
-      const remotePlayConnected = getRemotePlayClient().isConnected();
+      const multiplayerConnected = getMultiplayerClient().isConnected();
 
       // We don't want to **stop** the timer if we're connected to remote
       // play. Rather, we want to wait until everyone's timer is stopped
       // before moving on.
       // The server will tell us once everyone's ready.
-      if (remotePlayConnected) {
+      if (multiplayerConnected) {
         dispatch(handleCombatTimerHold({elapsedMillis}));
       } else {
         dispatch(handleCombatTimerStop({node, settings, elapsedMillis, seed}));

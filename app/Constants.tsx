@@ -18,17 +18,17 @@ export const authSettings = {
 
 const splitURL = API_HOST.split('/');
 export const remotePlaySettings = {
-  newSessionURI: API_HOST + '/remoteplay/v1/new_session',
-  connectURI: API_HOST + '/remoteplay/v1/connect',
-  firstLoadURI: API_HOST + '/remoteplay/v1/user',
-  websocketSession: ((NODE_ENV === 'production') ? 'wss://' : 'ws://') + splitURL[splitURL.length-1] + '/ws/remoteplay/v1/session',
+  newSessionURI: API_HOST + '/multiplayer/v1/new_session',
+  connectURI: API_HOST + '/multiplayer/v1/connect',
+  firstLoadURI: API_HOST + '/multiplayer/v1/user',
+  websocketSession: ((NODE_ENV === 'production') ? 'wss://' : 'ws://') + splitURL[splitURL.length-1] + '/ws/multiplayer/v1/session',
 };
 
 export const FEATURED_QUESTS: QuestDetails[] = [ // Featured quest ids generated from publishing, but don't leave them published!
-  {id: '0B7K9abSH1xEOeEZSVVMwNHNqaFE', partition: 'expedition-public', title: 'Learning to Adventure', summary: 'Your first adventure.', author: 'Todd Medema', publishedurl: 'quests/learning_to_adventure.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 30, genre: 'Drama', contentrating: 'Everyone' },
-  {id: '0B7K9abSH1xEOWVpEV1JGWDFtWmc', partition: 'expedition-public', title: 'Learning 2: The Horror', summary: 'Your first adventure continues with Expedition: The Horror.', author: 'Todd Medema', publishedurl: 'quests/learning_to_adventure_2_the_horror.xml', expansionhorror: true, minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 40, genre: 'Drama', contentrating: 'Everyone' },
-  {id: '0BzrQOdaJcH9MU3Z4YnE2Qi1oZGs', partition: 'expedition-public', title: 'Oust Albanus', summary: 'Your party encounters a smelly situation.', author: 'Scott Martin', publishedurl: 'quests/oust_albanus.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 40, genre: 'Comedy', contentrating: 'Everyone'},
-  {id: '0B7K9abSH1xEORjdkMWtTY3ZtNGs', partition: 'expedition-public', title: 'Mistress Malaise', summary: 'Mystery, Misfortune, and a Mistress.', author: 'Scott Martin', publishedurl: 'quests/mistress_malaise.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 30, maxtimeminutes: 60, genre: 'Drama', contentrating: 'Everyone'},
+  {id: '0B7K9abSH1xEOeEZSVVMwNHNqaFE', partition: 'expedition-public', title: 'Learning to Adventure', summary: 'Your first adventure.', author: 'Todd Medema', publishedurl: 'quests/learning_to_adventure.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 30, genre: 'Drama', contentrating: 'Everyone', language: 'English' },
+  {id: '0B7K9abSH1xEOWVpEV1JGWDFtWmc', partition: 'expedition-public', title: 'Learning 2: The Horror', summary: 'Your first adventure continues with Expedition: The Horror.', author: 'Todd Medema', publishedurl: 'quests/learning_to_adventure_2_the_horror.xml', expansionhorror: true, minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 40, genre: 'Drama', contentrating: 'Everyone', language: 'English' },
+  {id: '0BzrQOdaJcH9MU3Z4YnE2Qi1oZGs', partition: 'expedition-public', title: 'Oust Albanus', summary: 'Your party encounters a smelly situation.', author: 'Scott Martin', publishedurl: 'quests/oust_albanus.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 40, genre: 'Comedy', contentrating: 'Everyone', language: 'English' },
+  {id: '0B7K9abSH1xEORjdkMWtTY3ZtNGs', partition: 'expedition-public', title: 'Mistress Malaise', summary: 'Mystery, Misfortune, and a Mistress.', author: 'Scott Martin', publishedurl: 'quests/mistress_malaise.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 30, maxtimeminutes: 60, genre: 'Drama', contentrating: 'Everyone', language: 'English' },
   {id: '0B7K9abSH1xEOUUR1Z0lncm9NRjQ', partition: 'expedition-public', title: 'Dungeon Crawl', summary: 'How deep can you delve?', author: 'Todd Medema', publishedurl: 'quests/dungeon_crawl.xml', minplayers: 1, maxplayers: 6, mintimeminutes: 20, maxtimeminutes: 60, genre: 'Drama', contentrating: 'Everyone'},
 ];
 if (NODE_ENV === 'dev') { // http://quests.expeditiongame.com/#0B7K9abSH1xEOV3M2bTVMdWc4NVk
@@ -37,14 +37,14 @@ if (NODE_ENV === 'dev') { // http://quests.expeditiongame.com/#0B7K9abSH1xEOV3M2
 
 export const MAX_ADVENTURER_HEALTH = 12;
 export const MIN_FEEDBACK_LENGTH = 16;
-export const SUMMARY_MAX_LENGTH = 140; // length of a tweet
 
 export const UNSUPPORTED_BROWSERS = /^(.*amazon silk.*)|(.*(iphone|ipad|ipod|ios) os 9_.*)$/i;
 
 export const URLS = {
   android: 'https://play.google.com/store/apps/details?id=io.fabricate.expedition',
-  feedbackBase: 'http://www.expeditiongame.com/contact/?utm_source=app&utm_medium=',
   ios: 'https://itunes.apple.com/us/app/expedition-roleplaying-card/id1085063478?ls=1&mt=8',
+  web: 'http://expeditiongame.com/app',
+  feedbackBase: 'http://www.expeditiongame.com/contact/?utm_source=app&utm_medium=',
   questCreator: 'https://quests.expeditiongame.com/?utm_source=app',
 };
 

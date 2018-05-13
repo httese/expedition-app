@@ -23,6 +23,7 @@ interface ExpeditionCardProps extends React.Props<any> {
   inQuest?: boolean;
   onReturn?: () => any;
   title?: string | JSX.Element;
+  className?: string;
 }
 
 export default class ExpeditionCard extends React.Component<ExpeditionCardProps, {}> {
@@ -87,7 +88,7 @@ export default class ExpeditionCard extends React.Component<ExpeditionCardProps,
     }
     const isExperimental = getStore().getState().settings.experimental;
     return (
-      <div className={'base_card ' + (this.props.theme || 'LIGHT')}>
+      <div className={'base_card ' + (this.props.theme || 'LIGHT') + ' ' + (this.props.className || '')}>
         <div className="title_container">
           <IconButton onTouchTap={() => this.onReturn()}><ChevronLeftIcon/></IconButton>
           <span className="menu">

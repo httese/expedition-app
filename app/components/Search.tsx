@@ -242,7 +242,7 @@ export function renderResult(props: SearchResultProps): JSX.Element {
     orderDetails = (
       <div className={`searchOrderDetail ${orderField}`}>
         {orderField === 'ratingavg' && ratingCount >= 1 && <StarRating readOnly={true} value={+ratingAvg} quantity={ratingCount}/>}
-        {orderField === 'created' && Moment(quest.created).format('MMM YYYY')}
+        {orderField === 'created' && ('Published ' + Moment(quest.created).format('MMM YYYY'))}
       </div>
     );
   }

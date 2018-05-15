@@ -4,6 +4,7 @@ import QuestEnd, {QuestEndStateProps, QuestEndDispatchProps} from './QuestEnd'
 import {toCard, toPrevious} from '../actions/Card'
 import {checkoutSetState, toCheckout} from '../actions/Checkout'
 import {openSnackbar} from '../actions/Snackbar'
+import {exitQuest} from '../actions/Quest'
 import {login} from '../actions/User'
 import {userFeedbackChange} from '../actions/UserFeedback'
 import {submitUserFeedback} from '../actions/Web'
@@ -51,6 +52,7 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Quest
       if (userFeedback.rating && userFeedback.rating > 0) {
         dispatch(submitUserFeedback({quest, settings, user, userFeedback}));
       }
+      dispatch(exitQuest({}));
       dispatch(toPrevious({name: 'FEATURED_QUESTS'}));
     },
     onTip: (checkoutError: string|null, amount: number, quest: QuestState, settings: SettingsType, user: UserState, userFeedback: UserFeedbackState) => {

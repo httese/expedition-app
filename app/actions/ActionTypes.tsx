@@ -13,10 +13,10 @@ import {
   AppState,
   MultiplayerSessionMeta,
   SavedQuestMeta,
-  UserQuestsType,
 } from '../reducers/StateTypes'
 import {QuestDetails} from '../reducers/QuestTypes'
 import {ParserNode} from '../cardtemplates/TemplateTypes'
+import {UserQuestsType} from 'expedition-api/app/models/Users'
 import {ClientID, InstanceID, StatusEvent} from 'expedition-qdl/lib/multiplayer/Events'
 
 export interface FetchAnnouncementResponse {
@@ -79,11 +79,15 @@ export interface ReturnAction extends Redux.Action {
   skip?: {name: CardName, phase: CardPhase}[]; // Skip any occurrences of these cards
 };
 
+export interface QuestExitAction extends Redux.Action {
+  type: 'QUEST_EXIT';
+};
+
 export interface QuestNodeAction extends Redux.Action {
   type: 'QUEST_NODE';
   node: ParserNode;
   details?: QuestDetails;
-}
+};
 
 export interface ChangeSettingsAction extends Redux.Action {
   type: 'CHANGE_SETTINGS';

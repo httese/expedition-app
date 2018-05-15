@@ -197,6 +197,33 @@ export function formatPlayPeriod(minMinutes: number, maxMinutes: number): string
   }
 }
 
+export function smartTruncateSummary(summary: string) {
+  // Extract sentences
+  const match = summary.match(/(.*?(?:\.|\?|!))(?: |$)/gm);
+
+  if (match === null) {
+    return summary;
+  }
+
+  let result = '';
+  for (const m of match) {
+    if (result.length + m.length > 120) {
+      if (result === '') {
+        return summary.trim();
+      }
+
+      result = result.trim();
+      if (result.endsWith('.')) {
+        // Continue a natural ellispis
+        return result + '..';
+      }
+      return result;
+    }
+    result += m;
+  }
+  return summary.trim();
+}
+
 export interface SearchResultProps {
   index: number;
   lastPlayed: Date | null;
@@ -215,7 +242,7 @@ export function renderResult(props: SearchResultProps): JSX.Element {
     orderDetails = (
       <div className={`searchOrderDetail ${orderField}`}>
         {orderField === 'ratingavg' && ratingCount >= 1 && <StarRating readOnly={true} value={+ratingAvg} quantity={ratingCount}/>}
-        {orderField === 'created' && `Published ${Moment(quest.created).format('MMM YYYY')}`}
+        {orderField === 'created' && ('Published ' + Moment(quest.created).format('MMM YYYY'))}
       </div>
     );
   }
@@ -227,10 +254,14 @@ export function renderResult(props: SearchResultProps): JSX.Element {
   return (
     <Button key={props.index} onTouchTap={() => props.onQuest(quest)} remoteID={'quest-'+props.index}>
       <div className={classes.join(' ')}>
-        <div className="title">{quest.title}</div>
+        <div className="title">
+          <Truncate lines={2}>
+            {quest.title}
+          </Truncate>
+        </div>
         <div className="summary">
           <Truncate lines={3}>
-            {quest.summary || ''}
+            {smartTruncateSummary(quest.summary || '')}
           </Truncate>
         </div>
         {quest.mintimeminutes !== undefined && quest.maxtimeminutes !== undefined &&
@@ -256,6 +287,7 @@ function renderResults(props: SearchProps, hideHeader?: boolean): JSX.Element {
   return (
     <Card
       title="Quest Search Results"
+      className="search_card"
       header={(hideHeader) ? undefined : <div className="searchHeader">
         <span>{props.results.length} quests for {props.settings.numPlayers} <img className="inline_icon" src="images/adventurer_small.svg"/></span>
         <Button className="filter_button" onTouchTap={() => props.onFilter()} remoteID="filter">Filter &amp; Sort ></Button>
@@ -304,15 +336,17 @@ export function renderDetails(props: SearchDetailsProps): JSX.Element {
       <div className="searchDetailsExtended">
         <h3>Details</h3>
         <table className="searchDetailsTable">
-          <tr><th>Expansions required</th><td>{expansions}</td></tr>
-          <tr><th>Content rating</th><td>{quest.contentrating}</td></tr>
-          {quest.mintimeminutes !== undefined && quest.maxtimeminutes !== undefined &&
-            <tr><th>Play time</th><td>{formatPlayPeriod(quest.mintimeminutes, quest.maxtimeminutes)}</td></tr>
-          }
-          <tr><th>Players</th><td>{quest.minplayers}-{quest.maxplayers}</td></tr>
-          <tr><th>Genre</th><td>{quest.genre}</td></tr>
-          <tr><th>Language</th><td>{quest.language}</td></tr>
-          <tr><th>Last updated</th><td>{Moment(quest.published).format('MMMM D, YYYY')}</td></tr>
+          <tbody>
+            <tr><th>Expansions required</th><td>{expansions}</td></tr>
+            <tr><th>Content rating</th><td>{quest.contentrating}</td></tr>
+            {quest.mintimeminutes !== undefined && quest.maxtimeminutes !== undefined &&
+              <tr><th>Play time</th><td>{formatPlayPeriod(quest.mintimeminutes, quest.maxtimeminutes)}</td></tr>
+            }
+            <tr><th>Players</th><td>{quest.minplayers}-{quest.maxplayers}</td></tr>
+            <tr><th>Genre</th><td>{quest.genre}</td></tr>
+            <tr><th>Language</th><td>{quest.language}</td></tr>
+            <tr><th>Last updated</th><td>{Moment(quest.published).format('MMMM D, YYYY')}</td></tr>
+          </tbody>
         </table>
       </div>
     </Card>

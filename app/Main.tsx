@@ -59,7 +59,7 @@ import theme from './Theme'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import getMuiTheme from 'material-ui/styles/getMuiTheme'
 
-import {authSettings, NODE_ENV, UNSUPPORTED_BROWSERS, URLS} from './Constants'
+import {authSettings, NODE_ENV, UNSUPPORTED_BROWSERS} from './Constants'
 import {fetchAnnouncements, setAnnouncement} from './actions/Announcement'
 import {audioPause, audioResume} from './actions/Audio'
 import {toPrevious} from './actions/Card'
@@ -69,17 +69,14 @@ import {changeSettings} from './actions/Settings'
 import {openSnackbar} from './actions/Snackbar'
 import {silentLogin} from './actions/User'
 import {listSavedQuests} from './actions/SavedQuests'
-import {handleFetchErrors} from './actions/Web'
 import {getStore} from './Store'
 import {getAppVersion, getWindow, getGA, getDevicePlatform, getDocument, getNavigator, getStorageBoolean, setGA, setupPolyfills} from './Globals'
-import {getMultiplayerClient} from './Multiplayer'
-import {UserState} from './reducers/StateTypes'
-import {MultiplayerEvent} from 'expedition-qdl/lib/multiplayer/Events'
+import {SettingsType, UserState} from './reducers/StateTypes'
 
 // Thunk is unused, but necessary to prevent compiler errors
 // until types are fixed for multiplayer.
 // TODO: Fix redux types
-import thunk from 'redux-thunk'
+import thunk from 'redux-thunk' // tslint:disable-line
 
 const ReactGA = require('react-ga');
 
@@ -111,18 +108,6 @@ export function logEvent(name: string, argsInput: {[key: string]: any}): void {
       label: argsInput.label || '',
       value: argsInput.value || undefined,
     });
-  }
-
-  const fbp = getWindow().FirebasePlugin;
-  if (fbp) {
-    const FIREBASE_MAX_NAME_LENGTH = 40;
-    const FIREBASE_MAX_VALUE_LENGTH = 100;
-    name = (name || '').slice(0, FIREBASE_MAX_VALUE_LENGTH);
-    const args = {} as any;
-    Object.keys(argsInput).forEach((key: string) => {
-      args[(key || '').toString().slice(0, FIREBASE_MAX_NAME_LENGTH)] = (argsInput[key] || '').toString().slice(0, FIREBASE_MAX_VALUE_LENGTH);
-    });
-    fbp.logEvent(name, args);
   }
 }
 
@@ -185,26 +170,10 @@ function setupDevice() {
   getStore().dispatch(silentLogin({callback: (user: UserState) => { console.log(user); }}));
 }
 
-function setupEventLogging() {
-  const window = getWindow();
-  if (window.FirebasePlugin !== undefined) { // Load Firebase - only works on cordova apps
-    window.FirebasePlugin.onTokenRefresh((token: string) => {
-      // TODO save this server-side and use it to push notifications to this device
-    }, (error: string) => {
-      console.error(error);
-    });
-  } else {
-    window.FirebasePlugin = {
-      onTokenRefresh: (cb: (token: string) => void) => {},
-      logEvent: (name: string, args: any) => { console.info('Firebase log skipped: ', name, args); },
-    };
-  }
-}
-
 function setupHotReload() {
   if (module.hot) {
     module.hot.accept();
-    module.hot.accept('./components/base/AppContainer', () => {
+    module.hot.accept('./components/Compositor', () => {
       setTimeout(() => {render();});
     });
   }
@@ -243,115 +212,122 @@ function handleUrlHash() {
   }
 }
 
+function setupOnError(window: Window) {
+  window.onerror = (message: string, source: string, line: number) => {
+    const state = getStore().getState();
+    const quest = state.quest || {};
+    const settings = state.settings || {};
+    const questNode = quest.node && quest.node.elem && quest.node.elem[0];
+    Raven.setExtraContext({
+      card: state.card.key,
+      questName: quest.details.title,
+      questId: quest.details.id,
+      questCardTitle: (questNode) ? questNode.attribs.title : '',
+      questLine: (questNode) ? questNode.attribs['data-line'] : '',
+      settings: JSON.stringify(settings),
+    });
+    Raven.setTagsContext(); // Clear any existing tags
+    Raven.setTagsContext({
+      audio: settings.audioEnabled,
+      remotePlay: state.remotePlay.session !== null,
+    });
+    Raven.captureException(new Error(message));
+    if (quest.details.id) {
+      message = `Quest: ${quest.details.title}. Error: ${message}.`;
+    }
+    const label = (source) ? `${source} line ${line}` : null;
+    console.error(message, label);
+    logEvent('APP_ERROR', {action: message, label});
+    // Dispatch the snackbar change after resolving intermediate state.
+    // Otherwise, redux handlers may perform strange actions like calling
+    // setState inside of a render() cycle.
+    setTimeout(() => {
+      getStore().dispatch(openSnackbar('Error! Please send feedback.', message + ' Source: ' + label));
+    }, 0);
+    return true;
+  };
+}
+
+function setupStorage(document: Document) {
+  // Alert user if cookies disabled
+  // Based on https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cookies.js
+  try {
+    document.cookie = 'cookietest=1';
+    const ret = document.cookie.indexOf('cookietest=') !== -1;
+    document.cookie = 'cookietest=1; expires=Thu, 01-Jan-1970 00:00:01 GMT';
+    if (!ret) {
+      throw 'Cookies disabled';
+    }
+  } catch (err) {
+    setTimeout(() => {
+      getStore().dispatch(openSnackbar('Please enable cookies for the app to function properly.'));
+    }, 0);
+  }
+}
+
+function setupSettings(settings: SettingsType) {
+  if (settings) {
+    const contentSets = (settings || {}).contentSets;
+    for (const set in contentSets) {
+      if (contentSets[set] === null) {
+        getStore().dispatch(setDialog('EXPANSION_SELECT'));
+        break;
+      }
+    }
+  } else {
+    getStore().dispatch(setDialog('EXPANSION_SELECT'));
+  }
+}
+
 export function init() {
   const window = getWindow();
   const document = getDocument();
 
-  // Catch and display + log all errors
-  Raven.context(() => {
-    window.onerror = function(message: string, source: string, line: number) {
-      const state = getStore().getState();
-      const quest = state.quest || {};
-      const settings = state.settings || {};
-      const questNode = quest.node && quest.node.elem && quest.node.elem[0];
-      Raven.setExtraContext({
-        card: state.card.key,
-        questName: quest.details.title,
-        questId: quest.details.id,
-        questCardTitle: (questNode) ? questNode.attribs.title : '',
-        questLine: (questNode) ? questNode.attribs['data-line'] : '',
-        settings: JSON.stringify(settings),
-      });
-      Raven.setTagsContext(); // Clear any existing tags
-      Raven.setTagsContext({
-        audio: settings.audioEnabled,
-        remotePlay: state.remotePlay.session !== null,
-      });
-      Raven.captureException(new Error(message));
-      if (quest.details.id) {
-        message = `Quest: ${quest.details.title}. Error: ${message}.`;
-      }
-      const label = (source) ? `${source} line ${line}` : null;
-      console.error(message, label);
-      logEvent('APP_ERROR', {action: message, label});
-      // Dispatch the snackbar change after resolving intermediate state.
-      // Otherwise, redux handlers may perform strange actions like calling
-      // setState inside of a render() cycle.
-      setTimeout(() => {
-        getStore().dispatch(openSnackbar('Error! Please send feedback.', message + ' Source: ' + label));
-      }, 0);
-      return true;
-    };
+  setupOnError(window); // Do first to catch other loading errors
+  setupStorage(document);
 
-    // Alert user if cookies disabled
-    // Based on https://github.com/Modernizr/Modernizr/blob/master/feature-detects/cookies.js
-    try {
-      document.cookie = 'cookietest=1';
-      const ret = document.cookie.indexOf('cookietest=') !== -1;
-      document.cookie = 'cookietest=1; expires=Thu, 01-Jan-1970 00:00:01 GMT';
-      if (!ret) {
-        throw 'Cookies disabled';
-      }
-    } catch (err) {
-      setTimeout(() => {
-        getStore().dispatch(openSnackbar('Please enable cookies for the app to function properly.'));
-      }, 0);
+  window.platform = window.cordova ? 'cordova' : 'web';
+  window.onpopstate = function(e) {
+    getStore().dispatch(toPrevious({}));
+    e.preventDefault();
+  };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      getStore().dispatch(audioPause());
+    } else if (document.visibilityState === 'visible') {
+      getStore().dispatch(audioResume());
     }
+  }, false);
 
-    window.platform = window.cordova ? 'cordova' : 'web';
-    window.onpopstate = function(e) {
-      getStore().dispatch(toPrevious({}));
-      e.preventDefault();
-    };
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        getStore().dispatch(audioPause());
-      } else if (document.visibilityState === 'visible') {
-        getStore().dispatch(audioResume());
-      }
-    }, false);
+  // Only triggers on app builds
+  document.addEventListener('deviceready', setupDevice, false);
+  // For non-app builds
+  setTimeout(() => {
+    getStore().dispatch(silentLogin({callback: (user: UserState) => { console.log(user); }}));
+  }, 2000);
 
-    // Only triggers on app builds
-    document.addEventListener('deviceready', setupDevice, false);
-    // For non-app builds
-    setTimeout(() => {
-      getStore().dispatch(silentLogin({callback: (user: UserState) => { console.log(user); }}));
-    }, 2000);
+  setupPolyfills();
+  setupTapEvents();
+  setupGoogleAnalytics(); // before anything else that might log in the user
+  setupHotReload();
+  setupSavedQuests();
+  handleUrlHash();
 
-    setupPolyfills();
-    setupTapEvents();
-    setupGoogleAnalytics(); // before anything else that might log in the user
-    setupEventLogging();
-    setupHotReload();
-    setupSavedQuests();
-    handleUrlHash();
+  render();
 
-    render();
+  // Wait to process settings & dispatch additional UI until render complete
+  if (UNSUPPORTED_BROWSERS.test(getNavigator().userAgent)) {
+    getStore().dispatch(setAnnouncement(true, 'Unknown browser. Please use a standard browser like Chrome or Firefox for the best experience.'));
+  } else {
+    getStore().dispatch(fetchAnnouncements());
+  }
 
-    // Wait to process settings & dispatch additional UI until render complete
-    if (UNSUPPORTED_BROWSERS.test(getNavigator().userAgent)) {
-      getStore().dispatch(setAnnouncement(true, 'Unknown browser. Please use a standard browser like Chrome or Firefox for the best experience.'));
-    } else {
-      getStore().dispatch(fetchAnnouncements());
-    }
-    const settings = getStore().getState().settings;
-    if (settings) {
-      const contentSets = (settings || {}).contentSets;
-      for (const set in contentSets) {
-        if (contentSets[set] === null) {
-          getStore().dispatch(setDialog('EXPANSION_SELECT'));
-          break;
-        }
-      }
-    } else {
-      getStore().dispatch(setDialog('EXPANSION_SELECT'));
-    }
-  });
+  setupSettings(getStore().getState().settings);
 }
 
 function render() {
   // Require is done INSIDE this function to reload app changes.
-  const AppContainer = require('./components/base/AppContainer').default;
+  const Compositor = require('./components/Compositor').default;
   const base = getDocument().getElementById('react-app');
   if (!base) {
     throw new Error('Could not find react-app element');
@@ -359,7 +335,7 @@ function render() {
   ReactDOM.unmountComponentAtNode(base);
   ReactDOM.render(
     <MuiThemeProvider muiTheme={getMuiTheme(theme)}>
-      <AppContainer/>
+      <Compositor/>
     </MuiThemeProvider>,
     base
   );
@@ -369,5 +345,6 @@ function render() {
 // This lets us setup the environment before initializing, or not init at all.
 declare var doInit: boolean;
 if (typeof doInit !== 'undefined') {
-  init();
+  // Catch and display + log all errors
+  Raven.context(init);
 }

@@ -5,18 +5,16 @@ import {
   CardPhase,
   CheckoutState,
   DialogIDType,
-  SearchPhase,
   SearchSettings,
   SettingsType,
-  TransitionType,
+  UserQuestsType,
   UserState,
   AppState,
   MultiplayerSessionMeta,
   SavedQuestMeta,
 } from '../reducers/StateTypes'
 import {QuestDetails} from '../reducers/QuestTypes'
-import {ParserNode} from '../cardtemplates/TemplateTypes'
-import {UserQuestsType} from 'expedition-api/app/models/Users'
+import {ParserNode} from '../components/views/quest/cardtemplates/TemplateTypes'
 import {ClientID, InstanceID, StatusEvent} from 'expedition-qdl/lib/multiplayer/Events'
 
 export interface FetchAnnouncementResponse {
@@ -56,8 +54,9 @@ export interface CardTransitioningAction extends Redux.Action {
   isTransitioning: boolean;
 }
 
-export interface CheckoutSetStateAction extends Redux.Action, CheckoutState {
+export interface CheckoutSetStateAction extends Redux.Action {
   type: 'CHECKOUT_SET_STATE';
+  delta: Partial<CheckoutState>;
 }
 
 export interface DialogSetAction extends Redux.Action {

@@ -51,6 +51,8 @@ describe('Dependencies', () => {
       'node-sass',
       'babel-preset-env',
       'babel-core',
+      'react-test-renderer', // Needed for unit tests
+      'react-addons-test-utils', // Needed for unit tests
     ];
 
     let depstrs = Object.keys(package.dependencies);

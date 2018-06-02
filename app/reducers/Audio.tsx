@@ -2,8 +2,8 @@ import Redux from 'redux'
 import {AudioSetAction} from '../actions/ActionTypes'
 import {AudioState} from './StateTypes'
 
-const initialState: AudioState = {
-  loaded: false,
+export const initialAudioState: AudioState = {
+  loaded: 'UNLOADED',
   paused: false,
   intensity: 0,
   peakIntensity: 0,
@@ -11,10 +11,10 @@ const initialState: AudioState = {
   timestamp: 0,
 };
 
-export function audio(state: AudioState = initialState, action: Redux.Action): AudioState {
+export function audio(state: AudioState = initialAudioState, action: Redux.Action): AudioState {
   switch(action.type) {
     case 'AUDIO_SET':
-      return {...state, ...(action as AudioSetAction).changes};
+      return {...state, ...(action as AudioSetAction).delta};
     default:
       return state;
   }

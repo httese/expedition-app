@@ -1,5 +1,6 @@
 import Redux from 'redux'
 import {
+  AudioState,
   CardState,
   CardName,
   CardPhase,
@@ -40,18 +41,13 @@ export interface AnnouncementSetAction extends Redux.Action {
 
 export interface AudioSetAction extends Redux.Action {
   type: 'AUDIO_SET';
-  changes: any;
+  delta: Partial<AudioState>;
 }
 
 export interface AudioStoreBufferAction extends Redux.Action {
   type: 'AUDIO_STORE_BUFFER';
   name: string;
   buffer: AudioBuffer;
-}
-
-export interface CardTransitioningAction extends Redux.Action {
-  type: 'CARD_TRANSITIONING';
-  isTransitioning: boolean;
 }
 
 export interface CheckoutSetStateAction extends Redux.Action {
@@ -81,6 +77,11 @@ export interface ReturnAction extends Redux.Action {
 export interface QuestExitAction extends Redux.Action {
   type: 'QUEST_EXIT';
 };
+
+export interface QuestDetailsAction extends Redux.Action {
+  type: 'QUEST_DETAILS';
+  details: QuestDetails;
+}
 
 export interface QuestNodeAction extends Redux.Action {
   type: 'QUEST_NODE';

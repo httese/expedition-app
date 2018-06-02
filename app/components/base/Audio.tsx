@@ -2,7 +2,7 @@ import * as React from 'react'
 import {loadAudioLocalFile} from '../../actions/Audio'
 import {AudioLoadingType, AudioState, CardName, CardPhase} from '../../reducers/StateTypes'
 import {getWindow} from '../../Globals'
-import {logEvent} from '../../Main'
+import {logEvent} from '../../Logging'
 import {AUDIO_COMMAND_DEBOUNCE_MS, MUSIC_INTENSITY_MAX} from '../../Constants'
 const eachLimit = require('async/eachLimit');
 
@@ -23,6 +23,10 @@ const eachLimit = require('async/eachLimit');
   so it behaves like pause / resume
 */
 
+const INTENSITY_DECREMENT_CHANCE = 0.18;
+const INTENSITY_INCREMENT_CHANCE = 0.2;
+const INSTRUMENT_DECREMENT_CHANCE = 0.2;
+const INSTRUMENT_DECREMENT_DOUBLE_CHANCE = 0.15;
 const MUSIC_FADE_SECONDS = 1.5;
 const MUSIC_FADE_LONG_SECONDS = 3.5; // for fade outs, such as the end of combat
 const MUSIC_DEFINITIONS = {
@@ -89,13 +93,8 @@ export default class Audio extends React.Component<AudioProps, {}> {
     [key: string]: AudioBuffer;
   };
   private ctx: AudioContext;
-  private enabled: boolean;
   private intensity: number;
-  private peakIntensity: number;
   private paused: boolean;
-  private loaded: AudioLoadingType;
-  private onLoadChange: (loaded: AudioLoadingType) => void;
-  private lastCommandTimestamp: number;
   private currentMusicTheme: MusicDefinition|null;
   private currentMusicTracks: number[];
   private musicNodes: NodeSet[];
@@ -104,21 +103,18 @@ export default class Audio extends React.Component<AudioProps, {}> {
   constructor(props: AudioProps) {
     super(props);
     this.buffers = {};
-    this.lastCommandTimestamp = 0;
     this.currentMusicTheme = null;
     this.currentMusicTracks = [];
     this.musicNodes = [] as NodeSet[];
     this.paused = false;
-    this.enabled = props.enabled;
-    this.onLoadChange = props.onLoadChange;
 
     try {
       this.ctx = new (getWindow().AudioContext as any || getWindow().webkitAudioContext as any)();
-      if (this.enabled) {
-        setTimeout(() => this.loadFiles, 2000);
+      if (props.enabled) {
+        setTimeout(() => this.loadFiles(), 2000);
       }
     } catch(err) {
-      if (this.enabled) {
+      if (props.enabled) {
         props.disableAudio();
       }
       logEvent('web_audio_api_err', { label: err });
@@ -136,22 +132,26 @@ export default class Audio extends React.Component<AudioProps, {}> {
 
     const newIntensity = Math.round(Math.min(MUSIC_INTENSITY_MAX, Math.max(0, nextProps.audio.intensity)));
 
-    if (this.enabled !== nextProps.enabled) {
+    if (this.props.enabled !== nextProps.enabled) {
       if (nextProps.enabled) {
-        this.enabled = true;
         this.loadFiles();
-        this.playAtIntensity(this.intensity);
+        this.paused = false;
+        this.playAtIntensity(newIntensity);
       } else {
         this.pauseMusic();
-        this.enabled = false;
       }
     }
 
+    if (!nextProps.enabled) {
+      // Go no further, but keep track of intensity in case they re-enable mid-combat
+      this.intensity = newIntensity;
+      return console.log('Skipping playing audio, audio currently disabled.');
+    }
+
     // AUDIO COMMANDS. Ignore if old or duplicate (aka from going back, or settings change)
-    if (AUDIO_COMMAND_DEBOUNCE_MS > Math.abs(nextProps.audio.timestamp - this.lastCommandTimestamp)) {
+    if (AUDIO_COMMAND_DEBOUNCE_MS > Math.abs(nextProps.audio.timestamp - this.props.audio.timestamp)) {
       return;
     }
-    this.lastCommandTimestamp = nextProps.audio.timestamp;
 
     if (this.paused !== nextProps.audio.paused) {
       if (nextProps.audio.paused) {
@@ -164,12 +164,6 @@ export default class Audio extends React.Component<AudioProps, {}> {
     // If we're outside of combat, pause music
     if (!this.paused && (nextProps.cardName !== 'QUEST_CARD' || nextProps.cardPhase === null || nextProps.cardPhase === 'ROLEPLAY')) {
       this.pauseMusic();
-    }
-
-    if (!this.enabled) {
-      // Keep track of the intensity in case they enable mid-combat
-      this.intensity = newIntensity;
-      return console.log('Skipping playing audio, audio currently disabled.');
     }
 
     if (this.paused) {
@@ -191,9 +185,7 @@ export default class Audio extends React.Component<AudioProps, {}> {
     }
 
     const newPeak = nextProps.audio.peakIntensity;
-    const oldPeak = this.props.audio.peakIntensity;
-    if (newPeak !== oldPeak) {
-      this.peakIntensity = newPeak;
+    if (newPeak !== this.props.audio.peakIntensity) {
       const peakNode = this.musicNodes[this.musicNodes.length - 1];
       if (peakNode && peakNode.gain) {
         if (newPeak > 0) {
@@ -231,14 +223,9 @@ export default class Audio extends React.Component<AudioProps, {}> {
     }
   }
 
-  private setAudioLoading(loaded: AudioLoadingType) {
-    this.loaded = loaded;
-    this.onLoadChange(loaded);
-  }
-
   private loadFiles() {
-    if (!this.loaded) {
-      this.setAudioLoading('LOADING');
+    if (this.props.audio.loaded === 'UNLOADED') {
+      this.props.onLoadChange('LOADING');
       const musicFiles = Object.keys(MUSIC_DEFINITIONS).reduce((list: string[], musicClass: string) => {
         return list.concat(Object.keys(MUSIC_DEFINITIONS[musicClass]).reduce((list: string[], musicWeight: string) => {
           const weight = MUSIC_DEFINITIONS[musicClass][musicWeight];
@@ -251,12 +238,9 @@ export default class Audio extends React.Component<AudioProps, {}> {
         }, []));
       }, []);
       eachLimit(musicFiles, 4, (file: string, callback: (err?: Error) => void) => {
-        if (!this.enabled) {
-          return callback();
-        }
         loadAudioLocalFile(this.ctx, 'audio/' + file + '.mp3', (err: Error|null, buffer: any) => {
           if (err) {
-            console.log('Error loading audio file: ' + file);
+            console.error('Error loading audio file: ' + file);
             return callback(err);
           }
           this.buffers[file] = buffer;
@@ -265,10 +249,9 @@ export default class Audio extends React.Component<AudioProps, {}> {
       }, (err: Error) => {
         if (err) {
           console.error('Error loading audio files: ', err);
-          this.setAudioLoading('ERROR');
+          this.props.onLoadChange('ERROR');
         } else {
-          this.loaded = true;
-          this.setAudioLoading(this.enabled);
+          this.props.onLoadChange('LOADED');
           this.playAtIntensity(this.intensity);
         }
       });
@@ -305,10 +288,6 @@ export default class Audio extends React.Component<AudioProps, {}> {
   // Kick off a copy of the existing music theme
   // Doesn't stop the current music nodes (lets them stop naturally for reverb)
   private loopTheme(newTheme: boolean = false) {
-    if (!this.enabled) {
-      return console.log('Skipping playing music, audio currently disabled.');
-    }
-
     if (this.paused) {
       return console.log('Skipping playing music, audio currently paused.');
     }
@@ -321,18 +300,18 @@ export default class Audio extends React.Component<AudioProps, {}> {
     let themeIntensity = Math.ceil((this.intensity - theme.minIntensity) / (theme.maxIntensity - theme.minIntensity) * theme.variants);
     const skippedInstruments = [Math.floor(Math.random() * theme.baselineInstruments.length)];
 
-    if (Math.random() < 0.18 && themeIntensity > 1) {
+    if (Math.random() < INTENSITY_DECREMENT_CHANCE && themeIntensity > 1) {
       // randomly go a bit down in intensity
       themeIntensity--;
-    } else if (Math.random() < 0.2 && themeIntensity < theme.variants) {
+    } else if (Math.random() < INTENSITY_INCREMENT_CHANCE && themeIntensity < theme.variants) {
       // randomly go a bit up in intensity
       themeIntensity++;
     }
 
-    if (Math.random() < 0.2) {
+    if (Math.random() < INSTRUMENT_DECREMENT_CHANCE) {
       // randomly play one less instrument
       skippedInstruments.push(Math.floor(Math.random() * theme.baselineInstruments.length));
-    } else if (Math.random() < 0.15) {
+    } else if (Math.random() < INSTRUMENT_DECREMENT_DOUBLE_CHANCE) {
       // randomly play up to two fewer instruments
       skippedInstruments.push(Math.floor(Math.random() * theme.baselineInstruments.length));
       skippedInstruments.push(Math.floor(Math.random() * theme.baselineInstruments.length));
@@ -344,12 +323,12 @@ export default class Audio extends React.Component<AudioProps, {}> {
     });
 
     theme.instruments.forEach((instrument: string, i: number) => {
-      const active = (this.currentMusicTracks.indexOf(i) !== -1 || this.peakIntensity > 0);
+      const active = (this.currentMusicTracks.indexOf(i) !== -1 || this.props.audio.peakIntensity > 0);
       let initialVolume = (newTheme || !active) ? 0 : 1;
       let targetVolume = active ? 1 : 0;
 
-      if (this.peakIntensity > 0 && instrument === theme.peakingInstrument) {
-        targetVolume = this.peakIntensity;
+      if (this.props.audio.peakIntensity > 0 && instrument === theme.peakingInstrument) {
+        targetVolume = this.props.audio.peakIntensity;
         if (this.musicNodes[i] && this.musicNodes[i].gain) {
           initialVolume = this.musicNodes[i].gain.gain.value;
         }

@@ -5,7 +5,7 @@ import {initRoleplay} from './roleplay/Actions'
 import RoleplayContainer from './roleplay/RoleplayContainer'
 import {initCombat} from './combat/Actions'
 import CombatContainer from './combat/CombatContainer'
-import {combatScope} from './combat/State'
+import {combatScope} from './combat/Scope'
 import {TemplateContext, ParserNode} from './TemplateTypes'
 import {getStore} from '../../../../Store'
 
@@ -44,8 +44,6 @@ export function renderCardTemplate(card: CardState, node: ParserNode): JSX.Eleme
 
 export function getCardTemplateTheme(card: CardState): CardThemeType {
   switch(card.phase || 'ROLEPLAY') {
-    case 'ROLEPLAY':
-      return 'light';
     case 'DRAW_ENEMIES':
     case 'PREPARE':
     case 'TIMER':
@@ -57,8 +55,9 @@ export function getCardTemplateTheme(card: CardState): CardThemeType {
     case 'NO_TIMER':
     case 'MID_COMBAT_ROLEPLAY':
       return 'dark';
+    // case 'ROLEPLAY':
     default:
-      throw new Error('Unknown theme for card phase ' + card.phase);
+      return 'light';
   }
 }
 

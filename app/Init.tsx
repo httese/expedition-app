@@ -3,45 +3,8 @@ declare var module: any;
 
 // Before we even import other modules, first hook into
 // console logging so we can pass details along with error reports.
-import {logToBuffer} from './Console'
-
-const logHook = function(f: Function, objects: any[]) {
-  try {
-    logToBuffer(objects.map((o: any) => {
-      if (o === null) {
-        return 'null';
-      }
-      if (o === undefined) {
-        return 'undefined';
-      }
-      if (o.stack) {
-        return o.toString() + '<<<' + o.stack + '>>>';
-      }
-      const str = o.toString();
-      if (str === '[object Object]') {
-        try {
-          return JSON.stringify(o).substr(0, 512);
-        } catch (e) {
-          return '<un-stringifiable Object>';
-        }
-      }
-      return o.toString();
-    }).join(' '));
-    return f(...objects);
-  } catch (e) {
-    f(e);
-  }
-};
-{
-  const oldLog = console.log;
-  console.log = (...objs: any[]) => {return logHook(oldLog, objs);};
-
-  const oldWarn = console.warn;
-  console.warn = (...objs: any[]) => {return logHook(oldWarn, objs);};
-
-  const oldError = console.error;
-  console.error = (...objs: any[]) => {return logHook(oldError, objs);};
-}
+import {setupLogging, logEvent} from './Logging'
+setupLogging(console);
 
 import * as React from 'react'
 import * as injectTapEventPlugin from 'react-tap-event-plugin'
@@ -55,13 +18,14 @@ declare module 'react' {
 }
 import * as ReactDOM from 'react-dom'
 import * as Raven from 'raven-js'
+import {Provider} from 'react-redux'
 import theme from './Theme'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider'
 import getMuiTheme from 'material-ui/styles/getMuiTheme'
 
-import {authSettings, NODE_ENV, UNSUPPORTED_BROWSERS} from './Constants'
+import {AUTH_SETTINGS, NODE_ENV, UNSUPPORTED_BROWSERS} from './Constants'
 import {fetchAnnouncements, setAnnouncement} from './actions/Announcement'
-import {audioPause, audioResume} from './actions/Audio'
+import {audioSet} from './actions/Audio'
 import {toPrevious} from './actions/Card'
 import {setDialog} from './actions/Dialog'
 import {searchAndPlay} from './actions/Search'
@@ -70,7 +34,7 @@ import {openSnackbar} from './actions/Snackbar'
 import {silentLogin} from './actions/User'
 import {listSavedQuests} from './actions/SavedQuests'
 import {getStore} from './Store'
-import {getAppVersion, getWindow, getGA, getDevicePlatform, getDocument, getNavigator, getStorageBoolean, setGA, setupPolyfills} from './Globals'
+import {getAppVersion, getWindow, getDevicePlatform, getDocument, getNavigator, getStorageBoolean, setGA, setupPolyfills} from './Globals'
 import {SettingsType, UserState} from './reducers/StateTypes'
 
 // Thunk is unused, but necessary to prevent compiler errors
@@ -80,7 +44,7 @@ import thunk from 'redux-thunk' // tslint:disable-line
 
 const ReactGA = require('react-ga');
 
-Raven.config(authSettings.raven, {
+Raven.config(AUTH_SETTINGS.RAVEN, {
     release: getAppVersion(),
     environment: NODE_ENV,
     shouldSendCallback(data) {
@@ -94,20 +58,6 @@ function setupTapEvents() {
     injectTapEventPlugin();
   } catch (e) {
     console.log('Already injected tap event plugin');
-  }
-}
-
-// TODO record modal views as users navigate: ReactGA.modalview('/about/contact-us');
-// likely as a separate logView or logNavigate or something
-export function logEvent(name: string, argsInput: {[key: string]: any}): void {
-  const ga = getGA();
-  if (ga) {
-    ga.event({
-      category: name,
-      action: argsInput.action || '',
-      label: argsInput.label || '',
-      value: argsInput.value || undefined,
-    });
   }
 }
 
@@ -153,11 +103,11 @@ function setupDevice() {
   }, false);
 
   getDocument().addEventListener('pause', () => {
-    getStore().dispatch(audioPause());
+    getStore().dispatch(audioSet({paused: true}));
   }, false);
 
   getDocument().addEventListener('resume', () => {
-    getStore().dispatch(audioResume());
+    getStore().dispatch(audioSet({paused: false}));
   }, false);
 
   if (window.plugins !== undefined && window.plugins.insomnia !== undefined) {
@@ -220,7 +170,7 @@ function setupOnError(window: Window) {
     const questNode = quest.node && quest.node.elem && quest.node.elem[0];
     Raven.setExtraContext({
       card: state.card.key,
-      questName: quest.details.title,
+      questName: quest.details.title || 'n/a',
       questId: quest.details.id,
       questCardTitle: (questNode) ? questNode.attribs.title : '',
       questLine: (questNode) ? questNode.attribs['data-line'] : '',
@@ -293,9 +243,9 @@ export function init() {
   };
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
-      getStore().dispatch(audioPause());
+      getStore().dispatch(audioSet({paused: true}));
     } else if (document.visibilityState === 'visible') {
-      getStore().dispatch(audioResume());
+      getStore().dispatch(audioSet({paused: false}));
     }
   }, false);
 
@@ -327,7 +277,7 @@ export function init() {
 
 function render() {
   // Require is done INSIDE this function to reload app changes.
-  const Compositor = require('./components/Compositor').default;
+  const CompositorContainer = require('./components/CompositorContainer').default;
   const base = getDocument().getElementById('react-app');
   if (!base) {
     throw new Error('Could not find react-app element');
@@ -335,7 +285,9 @@ function render() {
   ReactDOM.unmountComponentAtNode(base);
   ReactDOM.render(
     <MuiThemeProvider muiTheme={getMuiTheme(theme)}>
-      <Compositor/>
+      <Provider store={getStore()}>
+        <CompositorContainer store={getStore()}/>
+      </Provider>
     </MuiThemeProvider>,
     base
   );

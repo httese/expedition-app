@@ -4,7 +4,7 @@ import {TemplatePhase, TemplateContext} from '../components/views/quest/cardtemp
 import {ParserNode} from '../components/views/quest/cardtemplates/TemplateTypes'
 import {SessionID} from 'expedition-qdl/lib/multiplayer/Session'
 import {StatusEvent} from 'expedition-qdl/lib/multiplayer/Events'
-import {GenreType, ContentRatingLabelType, LanguageType} from '../Constants'
+import {ContentRatingLabelType, GenreType, LanguageType} from 'expedition-qdl/lib/schema/Constants'
 
 export interface AnnouncementState {
   open: boolean;
@@ -12,7 +12,7 @@ export interface AnnouncementState {
   link: string;
 }
 
-export type AudioLoadingType = false | 'LOADING' | 'ERROR' | true;
+export type AudioLoadingType = 'UNLOADED' | 'LOADING' | 'ERROR' | 'LOADED';
 export interface AudioState {
   loaded: AudioLoadingType;
   paused: boolean;
@@ -110,7 +110,6 @@ export interface CardState {
   name: CardName;
   ts: number;
   key: string;
-  transitioning?: boolean;
   phase: CardPhase|null;
   overrideDebounce?: boolean;
 }

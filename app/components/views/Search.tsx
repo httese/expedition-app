@@ -4,13 +4,15 @@ import MenuItem from 'material-ui/MenuItem'
 import SelectField from 'material-ui/SelectField'
 import TextField from 'material-ui/TextField'
 import DoneIcon from 'material-ui/svg-icons/action/done'
+import StarsIcon from 'material-ui/svg-icons/action/stars'
 import Button from '../base/Button'
 import Card from '../base/Card'
 import Checkbox from '../base/Checkbox'
 import StarRating from '../base/StarRating'
 import {SearchSettings, SearchPhase, SearchState, SettingsType, UserState} from '../../reducers/StateTypes'
 import {QuestDetails} from '../../reducers/QuestTypes'
-import {GenreType, CONTENT_RATINGS, LANGUAGES, PLAYTIME_MINUTES_BUCKETS} from '../../Constants'
+import {PLAYTIME_MINUTES_BUCKETS} from '../../Constants'
+import {CONTENT_RATING_DESC, GenreType, LANGUAGES} from 'expedition-qdl/lib/schema/Constants'
 
 const Moment = require('moment');
 
@@ -58,7 +60,7 @@ export class SearchSettingsCard extends React.Component<SearchSettingsCardProps,
 // TODO once Material UI adds support for theming SelectFields (https://github.com/callemall/material-ui/issues/7044)
 // (aka Material UI 1.0) then remove the clutter here / move to Theme.tsx
   render() {
-    const rating = (this.state.contentrating) ? CONTENT_RATINGS[this.state.contentrating] : undefined;
+    const rating = (this.state.contentrating) ? CONTENT_RATING_DESC[this.state.contentrating] : undefined;
     const timeBuckets = PLAYTIME_MINUTES_BUCKETS.map((minutes: number, index: number) => {
       return <MenuItem key={index} value={minutes} primaryText={`${minutes} min`}/>;
     });
@@ -245,17 +247,28 @@ export function renderResult(props: SearchResultProps): JSX.Element {
   }
   const classes = ['searchResult'];
   if (props.lastPlayed) {
-    classes.push('played')
+    classes.push('played');
   }
 
   return (
     <Button key={props.index} onTouchTap={() => props.onQuest(quest)} remoteID={'quest-'+props.index}>
       <div className={classes.join(' ')}>
-        <div className="title">
-          <Truncate lines={2}>
-            {quest.title}
-          </Truncate>
-        </div>
+        <table className="searchResultsTitleTable">
+          <tbody>
+            <tr>
+              <th className="leftcell">
+                  <Truncate lines={2}>
+                    {quest.title}
+                  </Truncate>
+              </th>
+              <th className="rightcell">
+                {props.lastPlayed && <DoneIcon className="inline_icon questPlayedIcon" />}
+                {quest.official && <span className="indicator_spacer"><img className="inline_icon questOfficialIcon" src="images/compass_small.svg"/></span>}
+                {quest.awarded && <StarsIcon className="inline_icon questAwardedIcon" />}
+              </th>
+            </tr>
+          </tbody>
+        </table>
         <div className="summary">
           <Truncate lines={3}>
             {smartTruncateSummary(quest.summary || '')}
@@ -270,7 +283,7 @@ export function renderResult(props: SearchResultProps): JSX.Element {
         <span className="expansions">
           {quest.expansionhorror && <img className="inline_icon" src="images/horror_small.svg"></img>}
         </span>
-        <div className="indicators">{props.lastPlayed && <DoneIcon className="questPlayedIcon" />}</div>
+
       </div>
     </Button>
   );
@@ -292,8 +305,9 @@ function renderResults(props: SearchProps, hideHeader?: boolean): JSX.Element {
     >
       {results.length === 0 && !props.searching &&
         <div>
-          <div>No results found.</div>
-          {!hideHeader && <div>Try broadening your search.</div>}
+          <div>No quests found matching the search terms.</div>
+          {!hideHeader && <div>Try broadening the search by using fewer filters.</div>}
+          <Button className="filter_button" onTouchTap={() => props.onFilter()} remoteID="filter">Modify Search</Button>
         </div>
       }
       {results.length === 0 && props.searching && <div className="lds-ellipsis"><div></div><div></div><div></div><div></div></div>}
@@ -325,7 +339,9 @@ export function renderDetails(props: SearchDetailsProps): JSX.Element {
         <div className="author">by {quest.author}</div>
         {(quest.ratingcount && quest.ratingcount >= 1) ? <StarRating readOnly={true} value={+ratingAvg} quantity={quest.ratingcount}/> : ''}
         <div className="indicators">
-          {props.lastPlayed && <div className="lastPlayed"><DoneIcon className="inline_icon" /> Last played {Moment(props.lastPlayed).fromNow()}</div>}
+          {props.lastPlayed && <div className="inline_icon"><DoneIcon className="inline_icon" /> Last played {Moment(props.lastPlayed).fromNow()}</div>}
+          {quest.official && <div className="inline_icon"><img className="inline_icon" src="images/compass_small.svg"/> Official Quest!</div>}
+          {quest.awarded && <div className="inline_icon"><StarsIcon className="inline_icon" /> {quest.awarded}</div>}
         </div>
       </div>
       <Button className="bigbutton" onTouchTap={(e)=>props.onPlay(quest, props.isDirectLinked)} remoteID="play">Play</Button>
@@ -342,7 +358,7 @@ export function renderDetails(props: SearchDetailsProps): JSX.Element {
             <tr><th>Players</th><td>{quest.minplayers}-{quest.maxplayers}</td></tr>
             <tr><th>Genre</th><td>{quest.genre}</td></tr>
             <tr><th>Language</th><td>{quest.language}</td></tr>
-            <tr><th>Last updated</th><td>{Moment(quest.published).format('MMMM D, YYYY')}</td></tr>
+            <tr><th>Last updated</th><td>{Moment(quest.published).format('MMMM D, YYYY h:mm a')}</td></tr>
           </tbody>
         </table>
       </div>

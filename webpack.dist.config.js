@@ -6,7 +6,7 @@ const options = {
   entry: [
     'whatwg-fetch',
     'promise-polyfill',
-    './app/Main.tsx',
+    './app/Init.tsx',
     './app/Style.scss',
   ],
   resolve: {
@@ -62,6 +62,7 @@ const options = {
       { from: 'app/quests', to: 'quests'},
       { from: 'app/fonts', to: 'fonts'},
       { from: 'app/index.html' },
+      { from: 'app/robots.txt' },
       { from: 'app/manifest.json' },
       { from: { glob: '**/*.mp3' }, context: 'app/audio', to: './audio' },
       { from: { glob: 'node_modules/expedition-art/icons/*.svg' }, flatten: true, to: './images' },

@@ -4,7 +4,7 @@ import {handleFetchErrors, fetchUserQuests} from './Web'
 import {openSnackbar} from './Snackbar'
 import {UserState} from '../reducers/StateTypes'
 import {loggedOutUser} from '../reducers/User'
-import {authSettings} from '../Constants'
+import {AUTH_SETTINGS} from '../Constants'
 import {getGA, getGapi} from '../Globals'
 
 declare var gapi: any;
@@ -22,10 +22,10 @@ function loadGapi(callback: (gapi: any, async: boolean) => void) {
   }
 
   gapi.load('client:auth2', () => {
-    gapi.client.setApiKey(authSettings.apiKey);
+    gapi.client.setApiKey(AUTH_SETTINGS.API_KEY);
     gapi.auth2.init({
-      client_id: authSettings.clientId,
-      scope: authSettings.scopes,
+      client_id: AUTH_SETTINGS.CLIENT_ID,
+      scope: AUTH_SETTINGS.SCOPES,
       cookie_policy: 'none',
     }).then(() => {
       window.gapiLoaded = true;
@@ -35,7 +35,7 @@ function loadGapi(callback: (gapi: any, async: boolean) => void) {
 }
 
 function registerUserAndIdToken(user: {name: string, image: string, email: string}, idToken: string, callback: UserLoginCallback) {
-  fetch(authSettings.urlBase + '/auth/google', {
+  fetch(AUTH_SETTINGS.URL_BASE + '/auth/google', {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -115,8 +115,8 @@ function silentLoginCordova(callback: UserLoginCallback) {
     return;
   }
   window.plugins.googleplus.trySilentLogin({
-    scopes: authSettings.scopes,
-    webClientId: authSettings.clientId,
+    scopes: AUTH_SETTINGS.SCOPES,
+    webClientId: AUTH_SETTINGS.CLIENT_ID,
   }, (obj: any) => {
     registerUserAndIdToken({
       name: obj.displayName,
@@ -130,8 +130,8 @@ function silentLoginCordova(callback: UserLoginCallback) {
 
 function loginCordova(callback: UserLoginCallback) {
   window.plugins.googleplus.login({
-    scopes: authSettings.scopes,
-    webClientId: authSettings.clientId,
+    scopes: AUTH_SETTINGS.SCOPES,
+    webClientId: AUTH_SETTINGS.CLIENT_ID,
   }, (obj: any) => {
     registerUserAndIdToken({
       name: obj.displayName,
@@ -178,29 +178,3 @@ export function login(a: {callback: (user: UserState) => any}, loginFunc = login
     }
   };
 }
-
-export function logout() {
-  return (dispatch: Redux.Dispatch<any>): any => {
-    console.log('TODO LOGOUT');
-    dispatch({type: 'USER_LOGOUT'});
-  };
-}
-
-/*
-  logout: function(callback) {
-    if (!this.isLoggedIn()) {
-      return callback();
-    }
-    var xhr = new XMLHttpRequest();
-    xhr.open('POST', this.URL_BASE + "/auth/logout");
-    var that = this;
-    xhr.onload = function() {
-      that.user = null;
-      that.idToken = null;
-      gapi.auth2.getAuthInstance().signOut().then(callback);
-    };
-    xhr.withCredentials = true;
-    xhr.send();
-  },
-*/
-

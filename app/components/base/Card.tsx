@@ -26,11 +26,11 @@ export interface ExpeditionCardProps extends React.Props<any> {
 }
 
 export default class ExpeditionCard extends React.Component<ExpeditionCardProps, {}> {
-  state: {anchorEl: HTMLElement|null};
+  state: {anchorEl: HTMLElement|undefined}; // undefined instead of null for MaterialUI typing
 
   constructor(props: ExpeditionCardProps) {
     super(props);
-    this.state = {anchorEl: null};
+    this.state = {anchorEl: undefined};
   }
 
   onReturn() {
@@ -45,7 +45,7 @@ export default class ExpeditionCard extends React.Component<ExpeditionCardProps,
   }
 
   handleMenuClose() {
-    this.setState({anchorEl: null});
+    this.setState({anchorEl: undefined});
   }
 
   onMenuSelect(value: string) {
@@ -116,6 +116,8 @@ export default class ExpeditionCard extends React.Component<ExpeditionCardProps,
             </IconButton>
             <Menu
               open={Boolean(anchorEl)}
+              anchorEl={anchorEl}
+              classes={{paper: 'menu_popup'}}
               onClose={() => this.handleMenuClose()}>
               <MenuItem onClick={() => {this.onMenuSelect('HOME');}}>Home</MenuItem>
               {this.props.inQuest && isExperimental && <MenuItem onClick={() => {this.onMenuSelect('SAVE');}}>Save quest</MenuItem>}

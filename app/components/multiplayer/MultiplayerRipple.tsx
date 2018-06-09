@@ -15,7 +15,6 @@ export interface MultiplayerRippleProps {
   opacity?: number;
   children: JSX.Element;
   id?: string;
-  remoteID?: string;
   className?: string;
 }
 export interface MultiplayerRippleState {
@@ -39,7 +38,7 @@ export default class MultiplayerRipple extends React.Component<MultiplayerRipple
 
   handle(client: string, e: InteractionEvent) {
     // TODO keep start/end hashed by client, apply client color
-    if (this.props.remoteID === null || e.event === 'touchmove' || e.id !== this.props.remoteID) {
+    if (this.props.id === null || e.event === 'touchmove' || e.id !== this.props.id) {
       return;
     }
     switch (e.event) {
@@ -137,7 +136,6 @@ export default class MultiplayerRipple extends React.Component<MultiplayerRipple
     return (
       <MultiplayerAffector
         id={this.props.id}
-        remoteID={this.props.remoteID}
         className={this.props.className}
         onInteraction={(c: string, i: InteractionEvent) => {this.handle(c, i)}}>
         {rippleGroup}

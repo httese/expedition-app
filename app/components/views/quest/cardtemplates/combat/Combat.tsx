@@ -62,7 +62,7 @@ function renderSelectTier(props: CombatProps): JSX.Element {
     <Card title="Draw Enemies" theme="dark" inQuest={true}>
       <Picker
         label="Tier Sum"
-        remoteID="tier_sum"
+        id="tier_sum"
         onDelta={(i: number)=>props.onTierSumDelta(props.node, props.tier, i)}
         value={props.tier}>
         Set this to the combined tier you wish to fight.
@@ -297,7 +297,7 @@ function renderPlayerTier(props: CombatProps): JSX.Element {
       <h1 className="combat center damage">{damage} Damage</h1>
       <Picker
         label="Tier Sum"
-        remoteID="tier_sum"
+        id="tier_sum"
         onDelta={(i: number)=>props.onTierSumDelta(props.node, props.tier, i)}
         value={props.tier}>
         {props.settings.showHelp && 'The total tier of remaining enemies.'}
@@ -305,7 +305,7 @@ function renderPlayerTier(props: CombatProps): JSX.Element {
 
       <Picker
         label="Adventurers"
-        remoteID="adventurers"
+        id="adventurers"
         onDelta={(i: number)=>props.onAdventurerDelta(props.node, props.settings, props.numAliveAdventurers, i)}
         value={props.numAliveAdventurers}>
         {props.settings.showHelp && <span>The number of adventurers &gt; 0 health.</span>}

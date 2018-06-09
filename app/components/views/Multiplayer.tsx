@@ -81,7 +81,7 @@ function renderLobby(props: MultiplayerProps): JSX.Element {
           <Close/> Exit multiplayer (others may continue to play)
         </p>
         <p>Once everyone is connected, click Start:</p>
-        <Button remoteID="1" onClick={() =>{props.onContinue()}}>Start</Button>
+        <Button id="1" onClick={() =>{props.onContinue()}}>Start</Button>
       </div>
     </Card>
   );

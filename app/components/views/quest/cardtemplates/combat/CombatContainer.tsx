@@ -2,12 +2,24 @@ import Redux from 'redux'
 import {connect} from 'react-redux'
 import Combat, {CombatStateProps, CombatDispatchProps} from './Combat'
 import {toPrevious, toCard} from '../../../../../actions/Card'
-import {handleCombatTimerStart, handleCombatTimerHold, handleCombatTimerStop, tierSumDelta, adventurerDelta, handleCombatEnd, midCombatChoice, handleResolvePhase, generateCombatTemplate} from './Actions'
+import {
+  handleCombatDecisionStart,
+  handleCombatTimerStart,
+  handleCombatTimerHold,
+  handleCombatTimerStop,
+  handleCombatDecision,
+  handleCombatDecisionRoll,
+  tierSumDelta,
+  adventurerDelta,
+  handleCombatEnd,
+  midCombatChoice,
+  handleResolvePhase,
+  generateCombatTemplate
+} from './Actions'
 import {event} from '../../../../../actions/Quest'
 import {AppStateWithHistory, SettingsType} from '../../../../../reducers/StateTypes'
 import {EventParameters} from '../../../../../reducers/QuestTypes'
-import {CombatState} from './Types'
-import {CombatPhase} from './Types'
+import {CombatState, CombatPhase, Decision} from './Types'
 import {MAX_ADVENTURER_HEALTH} from '../../../../../Constants'
 import {logEvent} from '../../../../../Logging'
 import {ParserNode} from '../TemplateTypes'
@@ -98,6 +110,12 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
       });
       dispatch(handleCombatEnd({node, settings, victory: false, maxTier, seed}));
     },
+    onDecisionStart: () => {
+      dispatch(handleCombatDecisionStart({}));
+    },
+    onDecisionEnd: () => {
+      dispatch(toCard({name: 'QUEST_CARD', phase: 'PREPARE'}));
+    },
     onTimerStart: () => {
       dispatch(handleCombatTimerStart({}));
     },
@@ -117,6 +135,12 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
       } else {
         dispatch(handleCombatTimerStop({node, settings, elapsedMillis, seed}));
       }
+    },
+    onDecision: (node: ParserNode, settings: SettingsType, decision: Decision, elapsedMillis: number, seed: string) => {
+      dispatch(handleCombatDecision({node, settings, elapsedMillis, decision, seed}));
+    },
+    onRollDecision: (node: ParserNode, settings: SettingsType, decision: Decision, success: boolean, seed: string) => {
+      dispatch(handleCombatDecisionRoll({node, settings, decision, success, seed}));
     },
     onSurgeNext: (node: ParserNode) => {
       dispatch(handleResolvePhase({node}));

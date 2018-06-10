@@ -29,6 +29,10 @@ export function renderCardTemplate(card: CardState, node: ParserNode): JSX.Eleme
     case 'DRAW_ENEMIES':
     case 'PREPARE':
     case 'TIMER':
+    case 'PREPARE_DECISION':
+    case 'DECISION_TIMER':
+    case 'ROLL_DECISION':
+    case 'RESOLVE_DECISION':
     case 'SURGE':
     case 'RESOLVE_ABILITIES':
     case 'RESOLVE_DAMAGE':

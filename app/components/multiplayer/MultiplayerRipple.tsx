@@ -1,10 +1,11 @@
 import * as React from 'react'
 import * as ReactDOM from 'react-dom'
-//import TouchRipple from '@material-ui/ButtonBase/TouchRipple'
 import {InteractionEvent} from 'expedition-qdl/lib/multiplayer/Events'
 import MultiplayerAffector from './MultiplayerAffector'
+import {TransitionGroup} from 'react-transition-group';
+import Ripple from './Ripple'
 
-const ReactTransitionGroup = require('react-transition-group/TransitionGroup');
+
 
 // Remove the first element of the array
 const shift = ([, ...newArray]) => newArray;
@@ -17,11 +18,13 @@ export interface MultiplayerRippleProps {
   id?: string;
   className?: string;
 }
+
 export interface MultiplayerRippleState {
   hasRipples: boolean;
   nextKey: number;
   ripples: JSX.Element[];
 }
+
 export default class MultiplayerRipple extends React.Component<MultiplayerRippleProps, MultiplayerRippleState> {
 
   constructor(props: MultiplayerRippleProps) {
@@ -51,38 +54,13 @@ export default class MultiplayerRipple extends React.Component<MultiplayerRipple
     }
   }
 
+  componentDidCatch(error: any, info: any) {
+    console.error(error);
+    console.info(info);
+  }
+
   start(posX: number, posY: number, color: string) {
-
-    const ripples = this.state.ripples;
-
-    // Add a ripple to the ripples array
-    // TODO: Fix touch rippling
-    /*
-    ripples = [...ripples, (
-      <TouchRipple
-        key={this.state.nextKey}
-        style={this.getRippleStyle(posX, posY)}
-        color={color}
-        opacity={this.props.opacity || 1.0}
-      />
-    )];
-    */
-
-    this.setState({
-      hasRipples: true,
-      nextKey: this.state.nextKey + 1,
-      ripples: ripples,
-    });
-  }
-
-  end() {
-    const currentRipples = this.state.ripples;
-    this.setState({
-      ripples: shift(currentRipples),
-    });
-  }
-
-  getRippleStyle(posX: number, posY: number) {
+    console.log('Start ' + posX + ' ' + posY + ' ' + color);
     const el = ReactDOM.findDOMNode(this);
     const elHeight = (el as any).offsetHeight;
     const elWidth = (el as any).offsetWidth;
@@ -96,17 +74,34 @@ export default class MultiplayerRipple extends React.Component<MultiplayerRipple
       topLeftDiag, topRightDiag, botRightDiag, botLeftDiag
     ));
 
-    const rippleSize = rippleRadius * 2;
-    const left = realX - rippleRadius;
-    const top = realY - rippleRadius;
+    const ripple: JSX.Element = (
+      <Ripple
+        key={this.state.nextKey}
+        rippleX={realX}
+        rippleY={realY}
+        rippleSize={rippleRadius * 2}
+        classes={{
+          ripple: {
+            color,
+            opacity: (this.props.opacity || 1.0)
+          },
+        }}
+      />
+    );
 
-    return {
-      directionInvariant: true,
-      height: rippleSize,
-      width: rippleSize,
-      top,
-      left,
-    };
+    // Add a ripple to the ripples array
+    this.setState({
+      hasRipples: true,
+      nextKey: this.state.nextKey + 1,
+      ripples: [...this.state.ripples, ripple],
+    });
+  }
+
+  end() {
+    const currentRipples = this.state.ripples;
+    this.setState({
+      ripples: shift(currentRipples),
+    });
   }
 
   calcDiag(a: any, b: any) {
@@ -116,20 +111,10 @@ export default class MultiplayerRipple extends React.Component<MultiplayerRipple
   render() {
     let rippleGroup: JSX.Element|null = null;
     if (this.state.hasRipples) {
-      const style = {
-        height: '100%',
-        width: '100%',
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        overflow: 'hidden',
-        pointerEvents: 'none',
-        zIndex: 1, // This is also needed so that ripples do not bleed past a parent border radius.
-      };
       rippleGroup = (
-        <ReactTransitionGroup style={style}>
+        <TransitionGroup component="span" className="multiplayer_ripple">
           {this.state.ripples}
-        </ReactTransitionGroup>
+        </TransitionGroup>
       );
     }
 

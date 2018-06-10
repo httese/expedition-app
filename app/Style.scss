@@ -1296,6 +1296,17 @@ span.line {
     }
   }
 
+  .multiplayer_ripple {
+    height: '100%';
+    width: '100%';
+    position: 'absolute';
+    top: 0;
+    left: 0;
+    overflow: 'hidden';
+    pointerEvents: 'none';
+    zIndex: 1; /* This is also needed so that ripples do not bleed past a parent border radius.*/
+  }
+
   .menu_popup {
     background-color: $bg_primary;
     color: $font_color_primary;

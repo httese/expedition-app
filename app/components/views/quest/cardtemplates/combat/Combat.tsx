@@ -12,7 +12,9 @@ import {SettingsType, CardState, MultiplayerState} from '../../../../../reducers
 import {ParserNode} from '../TemplateTypes'
 import {EventParameters, Enemy, Loot} from '../../../../../reducers/QuestTypes'
 import {CombatPhase, CombatState} from './Types'
+import {DecisionProps} from '../decision/Decision'
 import Roleplay from '../roleplay/Roleplay'
+import {renderPrepareDecision, renderRollDecision, renderResolveDecision, renderDecisionTimer, DecisionDispatchProps} from '../decision/Decision'
 
 export interface CombatStateProps {
   card: CardState;
@@ -28,7 +30,7 @@ export interface CombatStateProps {
   mostRecentRolls?: number[];
 }
 
-export interface CombatDispatchProps {
+export interface CombatDispatchProps extends DecisionDispatchProps {
   onNext: (phase: CombatPhase) => void;
   onDefeat: (node: ParserNode, settings: SettingsType, maxTier: number, seed: string) => void;
   onRetry: () => void;
@@ -273,7 +275,11 @@ function renderResolve(props: CombatProps): JSX.Element {
 }
 
 function renderPlayerTier(props: CombatProps): JSX.Element {
-  const nextCard = (props.settings.timerSeconds) ? 'PREPARE' : 'NO_TIMER';
+  let nextCard: CombatPhase = (props.settings.timerSeconds) ? 'PREPARE' : 'NO_TIMER';
+  if (props.combat.roundCount % 3 === 0) {
+    nextCard = 'PREPARE_DECISION';
+  }
+
   let helpText: JSX.Element = (<span></span>);
   const damage = (props.combat.mostRecentAttack) ? props.combat.mostRecentAttack.damage : -1;
   const theHorror = (props.settings.contentSets.horror === true);
@@ -478,6 +484,20 @@ function capitalizeFirstLetter(input: string): string {
   return input.charAt(0).toUpperCase() + input.slice(1);
 }
 
+function toDecisionProps(props: CombatProps): DecisionProps {
+  return {
+    combat: props.combat,
+    settings: props.settings,
+    node: props.node,
+    seed: props.seed,
+    multiplayerState: props.multiplayerState,
+    onDecisionEnd: props.onDecisionEnd,
+    onDecisionStart: props.onDecisionStart,
+    onDecision: props.onDecision,
+    onRollDecision: props.onRollDecision,
+  };
+}
+
 const Combat = (props: CombatProps): JSX.Element => {
   switch(props.card.phase) {
     case 'DRAW_ENEMIES':
@@ -488,6 +508,14 @@ const Combat = (props: CombatProps): JSX.Element => {
       return renderPrepareTimer(props);
     case 'TIMER':
       return renderTimerCard(props);
+    case 'PREPARE_DECISION':
+      return renderPrepareDecision(toDecisionProps(props));
+    case 'DECISION_TIMER':
+      return renderDecisionTimer(toDecisionProps(props));
+    case 'ROLL_DECISION':
+      return renderRollDecision(toDecisionProps(props));
+    case 'RESOLVE_DECISION':
+      return renderResolveDecision(toDecisionProps(props));
     case 'SURGE':
       return renderSurge(props);
     case 'RESOLVE_ABILITIES':

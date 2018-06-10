@@ -6,7 +6,7 @@ import {CombatDifficultySettings, CombatAttack} from './Types'
 import {DifficultyType, SettingsType, AppStateWithHistory, MultiplayerState} from '../../../../../reducers/StateTypes'
 import {defaultContext} from '../Template'
 import {ParserNode} from '../TemplateTypes'
-import {CombatState} from './Types'
+import {CombatState, Decision} from './Types'
 import {audioSet} from '../../../../../actions/Audio'
 import {toCard} from '../../../../../actions/Card'
 import {COMBAT_DIFFICULTY, PLAYER_TIME_MULT, MUSIC_INTENSITY_MAX} from '../../../../../Constants'
@@ -384,6 +384,74 @@ export const handleCombatTimerStop = remoteify(function handleCombatTimerStop(a:
   }));
 
   return {elapsedMillis: a.elapsedMillis, seed: a.seed};
+});
+
+export const handleCombatDecisionStart = remoteify(function handleCombatDecisionStart(a: HandleCombatTimerStartArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory) {
+  console.log('handling combat decision start');
+  if (!a.settings) {
+    a.settings = getState().settings;
+  }
+  dispatch(toCard({name: 'QUEST_CARD', phase: 'DECISION_TIMER'}));
+  dispatch(audioSet({peakIntensity: 1}));
+  return {};
+});
+
+interface HandleCombatDecisionArgs {
+  node?: ParserNode;
+  settings?: SettingsType;
+  elapsedMillis: number;
+  decision: Decision;
+  seed: string;
+}
+export const handleCombatDecision = remoteify(function handleCombatDecision(a: HandleCombatDecisionArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleCombatDecisionArgs {
+  if (!a.node || !a.settings) {
+    a.node = getState().quest.node;
+    a.settings = getState().settings;
+  }
+  a.node = a.node.clone();
+  let combat = a.node.ctx.templates.combat;
+  if (!combat) {
+    combat = generateCombatTemplate(a.settings, false, a.node, getState);
+    a.node.ctx.templates.combat = combat;
+  }
+  combat.mostRecentDecision = a.decision;
+  dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
+  dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
+
+  return {
+    elapsedMillis: a.elapsedMillis,
+    decision: a.decision,
+    seed: a.seed
+  };
+});
+
+interface HandleCombatDecisionRollArgs {
+  node?: ParserNode;
+  settings?: SettingsType;
+  decision: Decision;
+  success: boolean;
+  seed: string;
+}
+export const handleCombatDecisionRoll = remoteify(function handleCombatDecisionRoll(a: HandleCombatDecisionRollArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleCombatDecisionRollArgs {
+  if (!a.node || !a.settings) {
+    a.node = getState().quest.node;
+    a.settings = getState().settings;
+  }
+  a.node = a.node.clone();
+  let combat = a.node.ctx.templates.combat;
+  if (!combat) {
+    combat = generateCombatTemplate(a.settings, false, a.node, getState);
+    a.node.ctx.templates.combat = combat;
+  }
+  combat.mostRecentDecisionSuccess = a.success;
+  dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
+  dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
+
+  return {
+    decision: a.decision,
+    success: a.success,
+    seed: a.seed
+  };
 });
 
 interface HandleCombatEndArgs {

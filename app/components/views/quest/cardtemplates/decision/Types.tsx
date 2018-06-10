@@ -12,10 +12,10 @@ export const PERSONA_TYPES: PersonaType[] = ['Light', 'Dark'];
 export type Decision = {
   difficulty: DifficultyType|null;
   persona: PersonaType|null;
-  skill: SkillType|null;
+  skill: SkillType;
 };
 
-declare type Outcome = {text: string, instructions: string[]};
+export type Outcome = {title: string, text: string, instructions: string[]};
 
 export interface Scenario {
   persona: PersonaType;

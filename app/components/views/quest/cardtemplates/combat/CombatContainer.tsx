@@ -16,10 +16,11 @@ import {
   handleResolvePhase,
   generateCombatTemplate
 } from './Actions'
+import {Decision, Scenario} from '../decision/Types'
 import {event} from '../../../../../actions/Quest'
 import {AppStateWithHistory, SettingsType} from '../../../../../reducers/StateTypes'
 import {EventParameters} from '../../../../../reducers/QuestTypes'
-import {CombatState, CombatPhase, Decision} from './Types'
+import {CombatState, CombatPhase} from './Types'
 import {MAX_ADVENTURER_HEALTH} from '../../../../../Constants'
 import {logEvent} from '../../../../../Logging'
 import {ParserNode} from '../TemplateTypes'
@@ -139,8 +140,8 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
     onDecision: (node: ParserNode, settings: SettingsType, decision: Decision, elapsedMillis: number, seed: string) => {
       dispatch(handleCombatDecision({node, settings, elapsedMillis, decision, seed}));
     },
-    onRollDecision: (node: ParserNode, settings: SettingsType, decision: Decision, success: boolean, seed: string) => {
-      dispatch(handleCombatDecisionRoll({node, settings, decision, success, seed}));
+    onRollDecision: (node: ParserNode, settings: SettingsType, scenario: Scenario, roll: number, seed: string) => {
+      dispatch(handleCombatDecisionRoll({node, settings, scenario, roll, seed}));
     },
     onSurgeNext: (node: ParserNode) => {
       dispatch(handleResolvePhase({node}));

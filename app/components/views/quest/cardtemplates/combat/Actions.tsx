@@ -6,7 +6,7 @@ import {CombatDifficultySettings, CombatAttack} from './Types'
 import {DifficultyType, SettingsType, AppStateWithHistory, MultiplayerState} from '../../../../../reducers/StateTypes'
 import {defaultContext} from '../Template'
 import {ParserNode} from '../TemplateTypes'
-import {CombatState, Decision} from './Types'
+import {CombatState} from './Types'
 import {audioSet} from '../../../../../actions/Audio'
 import {toCard} from '../../../../../actions/Card'
 import {COMBAT_DIFFICULTY, PLAYER_TIME_MULT, MUSIC_INTENSITY_MAX} from '../../../../../Constants'
@@ -15,6 +15,9 @@ import {QuestNodeAction, remoteify} from '../../../../../actions/ActionTypes'
 import {loadNode} from '../../../../../actions/Quest'
 import {setMultiplayerStatus} from '../../../../../actions/Multiplayer'
 import {getStore} from '../../../../../Store'
+
+import {Decision, Scenario} from '../decision/Types'
+import SCENARIOS from '../decision/Scenarios'
 
 const cheerio: any = require('cheerio');
 
@@ -414,7 +417,13 @@ export const handleCombatDecision = remoteify(function handleCombatDecision(a: H
     combat = generateCombatTemplate(a.settings, false, a.node, getState);
     a.node.ctx.templates.combat = combat;
   }
-  combat.mostRecentDecision = a.decision;
+
+  // TODO: Also randomly choose dark.
+  // TODO: Also propagate hardness
+  const choosable = SCENARIOS[a.decision.skill][a.decision.persona || 'Light'];
+  const arng = seedrandom.alea(a.seed);
+
+  combat.mostRecentScenario = choosable[Math.floor(arng()*choosable.length)];
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
   dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
 
@@ -428,8 +437,8 @@ export const handleCombatDecision = remoteify(function handleCombatDecision(a: H
 interface HandleCombatDecisionRollArgs {
   node?: ParserNode;
   settings?: SettingsType;
-  decision: Decision;
-  success: boolean;
+  scenario: Scenario;
+  roll: number;
   seed: string;
 }
 export const handleCombatDecisionRoll = remoteify(function handleCombatDecisionRoll(a: HandleCombatDecisionRollArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleCombatDecisionRollArgs {
@@ -443,13 +452,21 @@ export const handleCombatDecisionRoll = remoteify(function handleCombatDecisionR
     combat = generateCombatTemplate(a.settings, false, a.node, getState);
     a.node.ctx.templates.combat = combat;
   }
-  combat.mostRecentDecisionSuccess = a.success;
+  // TODO based on scenario & roll
+  if (a.roll > 12) {
+    combat.mostRecentOutcome = a.scenario.success;
+  } else if (a.roll > 8) {
+    combat.mostRecentOutcome = a.scenario.nonevent;
+  } else {
+    combat.mostRecentOutcome = a.scenario.failure;
+  }
+
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
   dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
 
   return {
-    decision: a.decision,
-    success: a.success,
+    scenario: a.scenario,
+    roll: a.roll,
     seed: a.seed
   };
 });

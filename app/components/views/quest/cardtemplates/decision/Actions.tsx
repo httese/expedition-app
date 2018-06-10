@@ -1,6 +1,6 @@
 import {SettingsType, MultiplayerState} from '../../../../../reducers/StateTypes'
 import {PLAYER_TIME_MULT} from '../../../../../Constants'
-import {Decision, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES} from './Types'
+import {Decision, Outcome, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES} from './Types'
 /*
 import {toCard} from '../../../../../actions/Card'
 DecisionState
@@ -16,13 +16,14 @@ const NUM_SKILL_CHECK_CHOICES = 3;
 // Only 2 of the 3 fields will be available.
 export function generateDecisions(rng: () => number): Decision[] {
   const result: Decision[] = [];
+  // TODO Make less dumb
   const selection = [[0,1,1], [1,0,1]][Math.floor(rng() * 2)];
 
   while (result.length < NUM_SKILL_CHECK_CHOICES) {
     const gen = {
       difficulty: (selection[0]) ? DIFFICULTIES[Math.floor(rng() * DIFFICULTIES.length)] : null,
       persona: (selection[1]) ? PERSONA_TYPES[Math.floor(rng() * PERSONA_TYPES.length)] : null,
-      skill: (selection[2]) ? SKILL_TYPES[Math.floor(rng() * SKILL_TYPES.length)] : null,
+      skill: SKILL_TYPES[Math.floor(rng() * SKILL_TYPES.length)],
     };
 
     // Throw the generated one away if it exactly matches a result we've already generated
@@ -34,6 +35,11 @@ export function generateDecisions(rng: () => number): Decision[] {
     result.push(gen);
   }
   return result;
+}
+
+export function resolveDecision(d: Decision, rng: () => number): Outcome {
+  // TODO: factor in over-time hardness increase
+  return {title: '', text: '', instructions: []};
 }
 
 // TODO DEDUPE

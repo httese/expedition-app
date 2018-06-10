@@ -1,6 +1,6 @@
 import {ParserNode} from '../TemplateTypes'
 import {Enemy, Loot} from '../../../../../reducers/QuestTypes'
-import {DecisionPhase} from '../decision/Types'
+import {DecisionPhase, Outcome, Scenario} from '../decision/Types'
 
 export type SkillType = 'Athletics' | 'Knowledge' | 'Charisma';
 export type DifficultyType = 'Easy' | 'Medium' | 'Hard';
@@ -8,12 +8,6 @@ export type PersonaType = 'Light' | 'Dark';
 export const SKILL_TYPES: SkillType[] = ['Athletics', 'Knowledge', 'Charisma'];
 export const DIFFICULTIES: DifficultyType[] = ['Easy', 'Medium', 'Hard'];
 export const PERSONA_TYPES: PersonaType[] = ['Light', 'Dark'];
-
-export type Decision = {
-  difficulty: DifficultyType|null;
-  persona: PersonaType|null;
-  skill: SkillType|null;
-};
 
 export interface CombatAttack {
   surge: boolean;
@@ -24,8 +18,8 @@ export interface MidCombatPhase {
   enemies: Enemy[];
   mostRecentAttack?: CombatAttack;
   mostRecentRolls?: number[];
-  mostRecentDecision?: Decision;
-  mostRecentDecisionSuccess?: boolean;
+  mostRecentScenario?: Scenario;
+  mostRecentOutcome?: Outcome;
   numAliveAdventurers: number;
   roundCount: number;
   tier: number;

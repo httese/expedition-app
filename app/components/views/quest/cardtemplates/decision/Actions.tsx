@@ -1,21 +1,18 @@
-import {SettingsType, MultiplayerState} from '../../../../../reducers/StateTypes'
+import {SettingsType, MultiplayerState, AppStateWithHistory} from '../../../../../reducers/StateTypes'
 import {PLAYER_TIME_MULT} from '../../../../../Constants'
-import {Decision, Outcome, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES} from './Types'
-/*
-import {toCard} from '../../../../../actions/Card'
-DecisionState
-AppStateWithHistory
+import {DecisionState, DecisionType, OutcomeType, ScenarioType, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES, EMPTY_SCENARIO} from './Types'
 import Redux from 'redux'
 import {remoteify, QuestNodeAction} from '../../../../../actions/ActionTypes'
 import {audioSet} from '../../../../../actions/Audio'
 import {ParserNode} from '../TemplateTypes'
-*/
+import SCENARIOS from './Scenarios'
+import * as seedrandom from 'seedrandom'
 
 const NUM_SKILL_CHECK_CHOICES = 3;
 // Generate 3 random combinations of difficulty, skill, and persona.
 // Only 2 of the 3 fields will be available.
-export function generateDecisions(rng: () => number): Decision[] {
-  const result: Decision[] = [];
+export function generateDecisions(settings: SettingsType, rng: () => number): DecisionType[] {
+  const result: DecisionType[] = [];
   // TODO Make less dumb
   const selection = [[0,1,1], [1,0,1]][Math.floor(rng() * 2)];
 
@@ -24,6 +21,7 @@ export function generateDecisions(rng: () => number): Decision[] {
       difficulty: (selection[0]) ? DIFFICULTIES[Math.floor(rng() * DIFFICULTIES.length)] : null,
       persona: (selection[1]) ? PERSONA_TYPES[Math.floor(rng() * PERSONA_TYPES.length)] : null,
       skill: SKILL_TYPES[Math.floor(rng() * SKILL_TYPES.length)],
+      allowedAttempts: Math.min(settings.numPlayers, Math.floor(rng() * 3 + 1)),
     };
 
     // Throw the generated one away if it exactly matches a result we've already generated
@@ -35,11 +33,6 @@ export function generateDecisions(rng: () => number): Decision[] {
     result.push(gen);
   }
   return result;
-}
-
-export function resolveDecision(d: Decision, rng: () => number): Outcome {
-  // TODO: factor in over-time hardness increase
-  return {title: '', text: '', instructions: []};
 }
 
 // TODO DEDUPE
@@ -59,22 +52,22 @@ function numLocalAndMultiplayerPlayers(settings: SettingsType, rp?: MultiplayerS
   return count || 1;
 }
 
+function generateDecisionTemplate(): DecisionState {
+  return {
+    scenario: EMPTY_SCENARIO,
+    allowedAttempts: 0,
+    outcomes: [],
+  };
+}
+
 export function roundTimeMillis(settings: SettingsType, rp?: MultiplayerState) {
   const totalPlayerCount = numLocalAndMultiplayerPlayers(settings, rp);
   return settings.timerSeconds * 1000 * PLAYER_TIME_MULT[totalPlayerCount];
 }
 
-
-/*
 interface HandleDecisionStartArgs {
-  settings?: SettingsType;
 }
-export const handleDecisionStart = remoteify(function handleDecisionStart(a: HandleDecisionStartArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory) {
-  console.log('handling combat decision start');
-  if (!a.settings) {
-    a.settings = getState().settings;
-  }
-  dispatch(toCard({name: 'QUEST_CARD', phase: 'DECISION_TIMER'}));
+export const handleDecisionTimerStart = remoteify(function handleDecisionTimerStart(a: HandleDecisionStartArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory) {
   dispatch(audioSet({peakIntensity: 1}));
   return {};
 });
@@ -83,10 +76,10 @@ interface HandleDecisionArgs {
   node?: ParserNode;
   settings?: SettingsType;
   elapsedMillis: number;
-  decision: Decision;
+  decision: DecisionType;
   seed: string;
 }
-export const handleDecision = remoteify(function handleDecision(a: HandleDecisionArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleDecisionArgs {
+export const handleDecisionSelect = remoteify(function handleDecision(a: HandleDecisionArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleDecisionArgs {
   if (!a.node || !a.settings) {
     a.node = getState().quest.node;
     a.settings = getState().settings;
@@ -94,11 +87,19 @@ export const handleDecision = remoteify(function handleDecision(a: HandleDecisio
   a.node = a.node.clone();
   let decision = a.node.ctx.templates.decision;
   if (!decision) {
-    a.node.ctx.templates.decision = {};
+    decision = generateDecisionTemplate();
+    a.node.ctx.templates.decision = decision;
   }
-  decision.chosen = a.decision;
+
+  // TODO: Also randomly choose dark.
+  // TODO: Also propagate hardness
+  const choosable = SCENARIOS[a.decision.skill][a.decision.persona || 'Light'];
+  const arng = seedrandom.alea(a.seed);
+
+  decision.scenario = choosable[Math.floor(arng()*choosable.length)];
+  decision.allowedAttempts = a.decision.allowedAttempts;
+
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
-  dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
 
   return {
     elapsedMillis: a.elapsedMillis,
@@ -107,11 +108,16 @@ export const handleDecision = remoteify(function handleDecision(a: HandleDecisio
   };
 });
 
+function makeGenericRetryOutcome(): OutcomeType {
+  // TODO more options
+  return {type: 'RETRY', title: 'Try Again', text: 'Just a little bit more! Try again!', instructions: []};
+}
+
 interface HandleDecisionRollArgs {
   node?: ParserNode;
   settings?: SettingsType;
-  decision: Decision;
-  success: boolean;
+  scenario: ScenarioType;
+  roll: number;
   seed: string;
 }
 export const handleDecisionRoll = remoteify(function handleDecisionRoll(a: HandleDecisionRollArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleDecisionRollArgs {
@@ -122,16 +128,29 @@ export const handleDecisionRoll = remoteify(function handleDecisionRoll(a: Handl
   a.node = a.node.clone();
   let decision = a.node.ctx.templates.decision;
   if (!decision) {
-    a.node.ctx.templates.decision = {};
+    decision = generateDecisionTemplate();
+    a.node.ctx.templates.decision = decision;
   }
-  decision.outcome = a.success;
+
+  // TODO: More randomized, include nonevent here.
+  const canRetry = (decision.allowedAttempts > decision.outcomes.length + 1);
+  if (a.roll > 12) {
+    decision.outcomes.push(a.scenario.success);
+  } else if (a.roll > 8) {
+    if (canRetry) {
+      decision.outcomes.push(a.scenario.retry || makeGenericRetryOutcome());
+    } else {
+      decision.outcomes.push(a.scenario.nonevent);
+    }
+  } else {
+    decision.outcomes.push(a.scenario.failure);
+  }
+
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
-  dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
 
   return {
-    decision: a.decision,
-    success: a.success,
+    scenario: a.scenario,
+    roll: a.roll,
     seed: a.seed
   };
 });
-*/

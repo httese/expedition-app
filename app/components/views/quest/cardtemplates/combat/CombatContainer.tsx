@@ -3,20 +3,23 @@ import {connect} from 'react-redux'
 import Combat, {CombatStateProps, CombatDispatchProps} from './Combat'
 import {toPrevious, toCard} from '../../../../../actions/Card'
 import {
-  handleCombatDecisionStart,
   handleCombatTimerStart,
   handleCombatTimerHold,
   handleCombatTimerStop,
-  handleCombatDecision,
-  handleCombatDecisionRoll,
   tierSumDelta,
   adventurerDelta,
   handleCombatEnd,
   midCombatChoice,
   handleResolvePhase,
-  generateCombatTemplate
+  generateCombatTemplate,
+  toDecisionCard
 } from './Actions'
-import {Decision, Scenario} from '../decision/Types'
+import {
+  handleDecisionTimerStart,
+  handleDecisionSelect,
+  handleDecisionRoll,
+} from '../decision/Actions'
+import {DecisionType, ScenarioType, EMPTY_DECISION_STATE} from '../decision/Types'
 import {event} from '../../../../../actions/Quest'
 import {AppStateWithHistory, SettingsType} from '../../../../../reducers/StateTypes'
 import {EventParameters} from '../../../../../reducers/QuestTypes'
@@ -66,8 +69,12 @@ const mapStateToProps = (state: AppStateWithHistory, ownProps: CombatStateProps)
   const stateCombat = (state.quest.node && state.quest.node.ctx && state.quest.node.ctx.templates && state.quest.node.ctx.templates.combat)
     || {tier: 0, mostRecentRolls: [10], numAliveAdventurers: 1};
 
+  const decision = (ownProps.node && ownProps.node.ctx && ownProps.node.ctx.templates && ownProps.node.ctx.templates.decision)
+  || EMPTY_DECISION_STATE;
+
   return {
     combat,
+    decision,
     card: ownProps.card,
     settings: state.settings,
     node: state.quest.node,
@@ -111,8 +118,20 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
       });
       dispatch(handleCombatEnd({node, settings, victory: false, maxTier, seed}));
     },
-    onDecisionStart: () => {
-      dispatch(handleCombatDecisionStart({}));
+    onDecisionSetup: () => {
+      dispatch(toDecisionCard({phase: 'PREPARE_DECISION'}));
+    },
+    onDecisionTimerStart: () => {
+      dispatch(handleDecisionTimerStart({}));
+      dispatch(toDecisionCard({phase: 'DECISION_TIMER'}));
+    },
+    onDecisionChoice: (node: ParserNode, settings: SettingsType, decision: DecisionType, elapsedMillis: number, seed: string) => {
+      dispatch(handleDecisionSelect({node, settings, elapsedMillis, decision, seed}));
+      dispatch(toDecisionCard({phase: 'RESOLVE_DECISION'}));
+    },
+    onDecisionRoll: (node: ParserNode, settings: SettingsType, scenario: ScenarioType, roll: number, seed: string) => {
+      dispatch(handleDecisionRoll({node, settings, scenario, roll, seed}));
+      dispatch(toDecisionCard({phase: 'RESOLVE_DECISION'}));
     },
     onDecisionEnd: () => {
       dispatch(toCard({name: 'QUEST_CARD', phase: 'PREPARE'}));
@@ -136,12 +155,6 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Comba
       } else {
         dispatch(handleCombatTimerStop({node, settings, elapsedMillis, seed}));
       }
-    },
-    onDecision: (node: ParserNode, settings: SettingsType, decision: Decision, elapsedMillis: number, seed: string) => {
-      dispatch(handleCombatDecision({node, settings, elapsedMillis, decision, seed}));
-    },
-    onRollDecision: (node: ParserNode, settings: SettingsType, scenario: Scenario, roll: number, seed: string) => {
-      dispatch(handleCombatDecisionRoll({node, settings, scenario, roll, seed}));
     },
     onSurgeNext: (node: ParserNode) => {
       dispatch(handleResolvePhase({node}));
@@ -173,4 +186,4 @@ const CombatContainer = connect(
   mapDispatchToProps
 )(Combat);
 
-export default CombatContainer
+export default CombatContainer;

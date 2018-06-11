@@ -15,9 +15,7 @@ import {QuestNodeAction, remoteify} from '../../../../../actions/ActionTypes'
 import {loadNode} from '../../../../../actions/Quest'
 import {setMultiplayerStatus} from '../../../../../actions/Multiplayer'
 import {getStore} from '../../../../../Store'
-
-import {Decision, Scenario} from '../decision/Types'
-import SCENARIOS from '../decision/Scenarios'
+import {DecisionPhase} from '../decision/Types'
 
 const cheerio: any = require('cheerio');
 
@@ -75,11 +73,44 @@ export function generateCombatTemplate(settings: SettingsType, custom: boolean, 
     custom: custom,
     enemies,
     roundCount: 0,
+    decisionPhase: 'PREPARE_DECISION',
     numAliveAdventurers: totalAdventurerCount,
     tier: tierSum,
     ...getDifficultySettings(settings.difficulty),
   }
 }
+
+interface ToDecisionCardArgs {
+  node?: ParserNode;
+  phase: DecisionPhase;
+  settings?: SettingsType;
+}
+export const toDecisionCard = remoteify(function toDecisionCard(a: ToDecisionCardArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): ToDecisionCardArgs {
+  if (!a.node) {
+    a.node = getState().quest.node;
+  }
+  a.node = a.node.clone();
+  let combat = a.node.ctx.templates.combat;
+  if (!combat) {
+    if (!a.settings) {
+      a.settings = getState().settings;
+    }
+    combat = generateCombatTemplate(a.settings, false, a.node, getState);
+    a.node.ctx.templates.combat = combat;
+  }
+  combat.decisionPhase = a.phase;
+
+  // Clear out the decision state if going to the prepare page
+  if (a.phase === 'PREPARE_DECISION') {
+    a.node.ctx.templates.decision = undefined;
+  }
+
+  dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
+  dispatch(toCard({name: 'QUEST_CARD', phase: 'MID_COMBAT_DECISION', keySuffix: a.phase}));
+  return {
+    phase: a.phase,
+  };
+});
 
 interface InitCombatArgs {
   node: ParserNode;
@@ -387,88 +418,6 @@ export const handleCombatTimerStop = remoteify(function handleCombatTimerStop(a:
   }));
 
   return {elapsedMillis: a.elapsedMillis, seed: a.seed};
-});
-
-export const handleCombatDecisionStart = remoteify(function handleCombatDecisionStart(a: HandleCombatTimerStartArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory) {
-  console.log('handling combat decision start');
-  if (!a.settings) {
-    a.settings = getState().settings;
-  }
-  dispatch(toCard({name: 'QUEST_CARD', phase: 'DECISION_TIMER'}));
-  dispatch(audioSet({peakIntensity: 1}));
-  return {};
-});
-
-interface HandleCombatDecisionArgs {
-  node?: ParserNode;
-  settings?: SettingsType;
-  elapsedMillis: number;
-  decision: Decision;
-  seed: string;
-}
-export const handleCombatDecision = remoteify(function handleCombatDecision(a: HandleCombatDecisionArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleCombatDecisionArgs {
-  if (!a.node || !a.settings) {
-    a.node = getState().quest.node;
-    a.settings = getState().settings;
-  }
-  a.node = a.node.clone();
-  let combat = a.node.ctx.templates.combat;
-  if (!combat) {
-    combat = generateCombatTemplate(a.settings, false, a.node, getState);
-    a.node.ctx.templates.combat = combat;
-  }
-
-  // TODO: Also randomly choose dark.
-  // TODO: Also propagate hardness
-  const choosable = SCENARIOS[a.decision.skill][a.decision.persona || 'Light'];
-  const arng = seedrandom.alea(a.seed);
-
-  combat.mostRecentScenario = choosable[Math.floor(arng()*choosable.length)];
-  dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
-  dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
-
-  return {
-    elapsedMillis: a.elapsedMillis,
-    decision: a.decision,
-    seed: a.seed
-  };
-});
-
-interface HandleCombatDecisionRollArgs {
-  node?: ParserNode;
-  settings?: SettingsType;
-  scenario: Scenario;
-  roll: number;
-  seed: string;
-}
-export const handleCombatDecisionRoll = remoteify(function handleCombatDecisionRoll(a: HandleCombatDecisionRollArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): HandleCombatDecisionRollArgs {
-  if (!a.node || !a.settings) {
-    a.node = getState().quest.node;
-    a.settings = getState().settings;
-  }
-  a.node = a.node.clone();
-  let combat = a.node.ctx.templates.combat;
-  if (!combat) {
-    combat = generateCombatTemplate(a.settings, false, a.node, getState);
-    a.node.ctx.templates.combat = combat;
-  }
-  // TODO based on scenario & roll
-  if (a.roll > 12) {
-    combat.mostRecentOutcome = a.scenario.success;
-  } else if (a.roll > 8) {
-    combat.mostRecentOutcome = a.scenario.nonevent;
-  } else {
-    combat.mostRecentOutcome = a.scenario.failure;
-  }
-
-  dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
-  dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
-
-  return {
-    scenario: a.scenario,
-    roll: a.roll,
-    seed: a.seed
-  };
 });
 
 interface HandleCombatEndArgs {

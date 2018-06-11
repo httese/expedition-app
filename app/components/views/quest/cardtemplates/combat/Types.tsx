@@ -1,6 +1,6 @@
 import {ParserNode} from '../TemplateTypes'
 import {Enemy, Loot} from '../../../../../reducers/QuestTypes'
-import {DecisionPhase, Outcome, Scenario} from '../decision/Types'
+import {DecisionPhase} from '../decision/Types'
 
 export type SkillType = 'Athletics' | 'Knowledge' | 'Charisma';
 export type DifficultyType = 'Easy' | 'Medium' | 'Hard';
@@ -18,8 +18,7 @@ export interface MidCombatPhase {
   enemies: Enemy[];
   mostRecentAttack?: CombatAttack;
   mostRecentRolls?: number[];
-  mostRecentScenario?: Scenario;
-  mostRecentOutcome?: Outcome;
+  decisionPhase: DecisionPhase;
   numAliveAdventurers: number;
   roundCount: number;
   tier: number;
@@ -42,5 +41,15 @@ export interface CombatState extends CombatDifficultySettings, MidCombatPhase, E
   custom: boolean;
 }
 
-export type CombatPhase = DecisionPhase | 'DRAW_ENEMIES' | 'PREPARE' | 'TIMER'  | 'SURGE' | 'RESOLVE_ABILITIES' | 'RESOLVE_DAMAGE' | 'VICTORY' | 'DEFEAT' | 'NO_TIMER' | 'MID_COMBAT_ROLEPLAY';
+export type CombatPhase = 'DRAW_ENEMIES'
+  | 'PREPARE'
+  | 'TIMER'
+  | 'SURGE'
+  | 'RESOLVE_ABILITIES'
+  | 'RESOLVE_DAMAGE'
+  | 'VICTORY'
+  | 'DEFEAT'
+  | 'NO_TIMER'
+  | 'MID_COMBAT_ROLEPLAY'
+  | 'MID_COMBAT_DECISION';
 

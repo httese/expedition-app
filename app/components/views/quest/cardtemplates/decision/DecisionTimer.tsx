@@ -2,13 +2,13 @@ import * as React from 'react'
 import Button from '../../../../base/Button'
 import {CardThemeType} from '../../../../../reducers/StateTypes'
 import {getStore} from '../../../../../Store'
-import {Decision} from './Types'
+import {DecisionType} from './Types'
 
 interface DecisionTimerProps extends React.Props<any> {
-  decisions: Decision[];
+  decisions: DecisionType[];
   roundTimeTotalMillis: number;
   theme: CardThemeType;
-  onDecision: (d: Decision, elapsedMillis: number) => any;
+  onDecision: (d: DecisionType, elapsedMillis: number) => any;
 }
 
 export default class DecisionTimer extends React.Component<DecisionTimerProps, {}> {
@@ -23,7 +23,7 @@ export default class DecisionTimer extends React.Component<DecisionTimerProps, {
     }, 100);
   }
 
-  onChoice(d: Decision) {
+  onChoice(d: DecisionType) {
     if (!this.interval) {
       return;
     }
@@ -56,8 +56,8 @@ export default class DecisionTimer extends React.Component<DecisionTimerProps, {
     const questTheme = getStore().getState().quest.details.theme || 'base';
     const classes = ['no_icon', 'base_timer_card', 'card_theme_' + cardTheme, 'quest_theme_' + questTheme];
 
-    const decisions = this.props.decisions.map((d: Decision, i: number) => {
-      return <Button key={i} onClick={() => this.onChoice(d)}>{d.difficulty} {d.persona} {d.skill}</Button>
+    const decisions = this.props.decisions.map((d: DecisionType, i: number) => {
+      return <Button key={i} onClick={() => this.onChoice(d)}>{d.allowedAttempts} {d.difficulty} {d.persona} {d.skill}</Button>
     });
 
     return (

@@ -48,7 +48,7 @@ export function renderPrepareDecision(props: DecisionProps): JSX.Element {
   return (
     <Card title="Prepare for a Decision" theme="dark" inQuest={true}>
       {helpText}
-      <Button className="bigbutton" onClick={() => props.onStartTimer()}>Start Timer</Button>
+      <Button className="bigbutton" onClick={() => props.onStartTimer()}>Begin Skill Check</Button>
     </Card>
   );
 }

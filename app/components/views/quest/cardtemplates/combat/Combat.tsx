@@ -403,7 +403,7 @@ function renderDefeat(props: CombatProps): JSX.Element {
   // Always show a helpful hint here - it's not getting in the way like other help text might
   // and it's a good opportunity to mitigate a potentially bad user experience
   // Use a random number in the state to keep it consistent / not change on new render events
-  const helpText = props.mostRecentRolls && helpfulHints[props.mostRecentRolls[0]  helpfulHints.length];
+  const helpText = props.mostRecentRolls && helpfulHints[props.mostRecentRolls[0] % helpfulHints.length];
 
   // If onLose is just an **end**, offer a retry button
   let retryButton = <span></span>;

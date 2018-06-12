@@ -3,10 +3,11 @@ import * as React from 'react'
 import * as seedrandom from 'seedrandom'
 import Button from '../../../../base/Button'
 import Card from '../../../../base/Card'
+import Callout from '../../../../base/Callout'
 import {ParserNode} from '../TemplateTypes'
 import {SettingsType, CardState, CardThemeType, MultiplayerState} from '../../../../../reducers/StateTypes'
 import {generateDecisions, roundTimeMillis} from './Actions'
-import {DecisionState, DecisionType, ScenarioType, EMPTY_OUTCOME} from './Types'
+import {DecisionState, DecisionType, EMPTY_OUTCOME} from './Types'
 import DecisionTimer from './DecisionTimer'
 
 export interface DecisionStateProps {
@@ -15,13 +16,14 @@ export interface DecisionStateProps {
   settings: SettingsType;
   node: ParserNode;
   seed: string;
+  maxAllowedAttempts?: number;
   multiplayerState?: MultiplayerState;
 }
 
 export interface DecisionDispatchProps {
   onStartTimer: () => void;
-  onChoice: (node: ParserNode, settings: SettingsType, decision: DecisionType, elapsedMillis: number, seed: string) => void;
-  onRoll: (node: ParserNode, settings: SettingsType, scenario: ScenarioType, roll: number, seed: string) => void;
+  onChoice: (node: ParserNode, settings: SettingsType, choice: DecisionType, elapsedMillis: number, seed: string) => void;
+  onRoll: (node: ParserNode, settings: SettingsType, decision: DecisionState, roll: number, seed: string) => void;
   onEnd: () => void;
 }
 
@@ -46,7 +48,7 @@ export function renderPrepareDecision(props: DecisionProps): JSX.Element {
   }
 
   return (
-    <Card title="Prepare for a Decision" theme="dark" inQuest={true}>
+    <Card title="Skill Check" theme="dark" inQuest={true}>
       {helpText}
       <Button className="bigbutton" onClick={() => props.onStartTimer()}>Begin Skill Check</Button>
     </Card>
@@ -64,7 +66,7 @@ export function renderDecisionTimer(props: DecisionProps): JSX.Element {
   return (
     <DecisionTimer
       theme="dark"
-      decisions={generateDecisions(props.settings, arng)}
+      decisions={generateDecisions(props.settings, arng, props.maxAllowedAttempts)}
       roundTimeTotalMillis={roundTimeMillis(props.settings, props.multiplayerState)}
       onDecision={(d: DecisionType, ms: number) => props.onChoice(props.node, props.settings, d, ms, props.seed)} />
   );
@@ -74,55 +76,76 @@ export function renderResolveDecision(props: DecisionProps): JSX.Element {
   const scenario = props.decision.scenario;
   const roll = <img className="inline_icon" src="images/roll_white_small.svg"></img>;
   const outcome = props.decision.outcomes[props.decision.outcomes.length-1] || EMPTY_OUTCOME;
+  const choice = props.decision.choice;
 
   // Note: similar help text in renderNoTimer()
   let inst: JSX.Element = (<span></span>);
 
   if (outcome.instructions.length > 0) {
     const elems = outcome.instructions.map((instruction: string, i: number) => {
-      return <li key={i}>{instruction}</li>;
+      return <Callout key={i} icon="adventurer_white">{instruction}</Callout>;
     });
-    inst = <ol>{elems}</ol>;
+    inst = <span>{elems}</span>;
   } else if (props.settings.showHelp && outcome.type === 'RETRY') {
     inst = (
-      // TODO: Show the decision and hide persona if not used.
-      <ol>
-        <li>
-          <strong>Roll</strong> a D20 and add your matching skill's highest level.
-        </li>
-        <li><strong>If your persona type matches</strong>, then add 2 to your roll.</li>
-        <li><strong>Select</strong> your result.</li>
-      </ol>
+      // TODO: show the decision made
+      // TODO: Show the specific skill and hide persona if not used.
+      <span>
+        <p>{(props.decision.outcomes.length > 0) ? 'Choose another' : 'One'} adventurer:</p>
+        <ol>
+          <li><strong>Roll</strong> a D20.</li>
+          <li><strong>Add</strong> your highest {choice.skill} skill level to the roll.</li>
+          {choice.persona && <li><strong>Add</strong> 2 to your roll if your persona is {choice.persona}.</li>}
+          <li><strong>Select</strong> your result.</li>
+        </ol>
+      </span>
     );
   }
 
   let pretext: JSX.Element;
-  if (!outcome) {
+  if (outcome === EMPTY_OUTCOME) {
     pretext = <p>{scenario.prelude}</p>;
   } else /* need to retry */ {
     pretext = <p>{outcome.text}</p>;
   }
 
+  const numAttemptsLeft = props.decision.choice.numAttempts - props.decision.outcomes.length;
+  const header = <p className="center"><strong>{choice.difficulty} {choice.persona} {choice.skill} ({numAttemptsLeft} {(numAttemptsLeft > 1) ? 'Attempts' : 'Attempt'} Left)</strong></p>
+
   let controls: JSX.Element;
   console.log(outcome);
   console.log('vs');
   console.log(scenario);
-  if (outcome.type === 'SUCCESS' || outcome.type === 'FAILURE' || outcome.type === 'NONEVENT') {
+  if (outcome.type === 'SUCCESS' || outcome.type === 'FAILURE' || outcome.type === 'INTERRUPTED') {
     controls = <Button onClick={() => props.onEnd()}>Next</Button>;
   } else {
     controls = (
       <span>
-        <Button onClick={() => props.onRoll(props.node, props.settings, scenario, 18, props.seed)}>{roll} 17 - 20</Button>
-        <Button onClick={() => props.onRoll(props.node, props.settings, scenario, 14, props.seed)}>{roll} 13 - 16</Button>
-        <Button onClick={() => props.onRoll(props.node, props.settings, scenario, 10, props.seed)}>{roll} 9 - 12</Button>
-        <Button onClick={() => props.onRoll(props.node, props.settings, scenario, 6, props.seed)}>{roll} 5 - 8</Button>
-        <Button onClick={() => props.onRoll(props.node, props.settings, scenario, 2, props.seed)}>{roll} 1 - 4</Button>
+        <Button onClick={() => props.onRoll(props.node, props.settings, props.decision, 18, props.seed)}>{roll} ≥ 17</Button>
+        <Button onClick={() => props.onRoll(props.node, props.settings, props.decision, 14, props.seed)}>{roll} 13 - 16</Button>
+        <Button onClick={() => props.onRoll(props.node, props.settings, props.decision, 10, props.seed)}>{roll} 9 - 12</Button>
+        <Button onClick={() => props.onRoll(props.node, props.settings, props.decision, 6, props.seed)}>{roll} 5 - 8</Button>
+        <Button onClick={() => props.onRoll(props.node, props.settings, props.decision, 2, props.seed)}>{roll} ≤ 4</Button>
       </span>
     );
   }
 
+  // TODO different for first retry
+  let title: string;
+  if (props.decision.outcomes.length > 0 && outcome.type === 'RETRY') {
+    title = 'Resolve';
+  } else {
+    title = {
+      'SUCCESS': 'Success!',
+      'FAILURE': 'Failure',
+      'INTERRUPTED': 'Interrupted',
+      'RETRY': 'Lend a Hand',
+    }[outcome.type] || 'Resolve';
+  }
+
   return (
-    <Card title={outcome.title || 'Resolve'} theme="dark" inQuest={true}>
+    <Card title={title} theme="dark" inQuest={true}>
+      {outcome.type === 'RETRY' && header}
       {pretext}
       {inst}
       {controls}

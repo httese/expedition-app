@@ -54,10 +54,10 @@ export default class DecisionTimer extends React.Component<DecisionTimerProps, {
 
     const cardTheme = this.props.theme || 'light';
     const questTheme = getStore().getState().quest.details.theme || 'base';
-    const classes = ['no_icon', 'base_timer_card', 'card_theme_' + cardTheme, 'quest_theme_' + questTheme];
+    const classes = ['no_icon', 'base_card', 'base_timer_card', 'card_theme_' + cardTheme, 'quest_theme_' + questTheme];
 
     const decisions = this.props.decisions.map((d: DecisionType, i: number) => {
-      return <Button key={i} onClick={() => this.onChoice(d)}>{d.allowedAttempts} {d.difficulty} {d.persona} {d.skill}</Button>
+      return <Button className="bigbutton" key={i} onClick={() => this.onChoice(d)}>{d.numAttempts} {d.difficulty} {d.persona} {d.skill}</Button>
     });
 
     return (

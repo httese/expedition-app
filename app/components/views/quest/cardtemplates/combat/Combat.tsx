@@ -14,7 +14,7 @@ import {EventParameters, Enemy, Loot} from '../../../../../reducers/QuestTypes'
 import {CombatPhase, CombatState} from './Types'
 import Roleplay from '../roleplay/Roleplay'
 import Decision from '../decision/Decision'
-import {DecisionState, DecisionType, ScenarioType} from '../decision/Types'
+import {DecisionState, DecisionType} from '../decision/Types'
 
 export interface CombatStateProps {
   card: CardState;
@@ -49,8 +49,8 @@ export interface CombatDispatchProps {
 
   onDecisionSetup: () => void;
   onDecisionTimerStart: () => void;
-  onDecisionChoice: (node: ParserNode, settings: SettingsType, decision: DecisionType, elapsedMillis: number, seed: string) => void;
-  onDecisionRoll: (node: ParserNode, settings: SettingsType, scenario: ScenarioType, roll: number, seed: string) => void;
+  onDecisionChoice: (node: ParserNode, settings: SettingsType, choice: DecisionType, elapsedMillis: number, seed: string) => void;
+  onDecisionRoll: (node: ParserNode, settings: SettingsType, decision: DecisionState, roll: number, seed: string) => void;
   onDecisionEnd: () => void;
 }
 
@@ -284,7 +284,7 @@ function renderResolve(props: CombatProps): JSX.Element {
 function renderPlayerTier(props: CombatProps): JSX.Element {
   const nextCard: CombatPhase = (props.settings.timerSeconds) ? 'PREPARE' : 'NO_TIMER';
 
-  const shouldRunDecision = (props.combat.roundCount % 1 === 0); // TODO CHANGE
+  const shouldRunDecision = (props.combat.roundCount % 2 === 0); // TODO CHANGE
 
   let helpText: JSX.Element = (<span></span>);
   const damage = (props.combat.mostRecentAttack) ? props.combat.mostRecentAttack.damage : -1;
@@ -403,7 +403,7 @@ function renderDefeat(props: CombatProps): JSX.Element {
   // Always show a helpful hint here - it's not getting in the way like other help text might
   // and it's a good opportunity to mitigate a potentially bad user experience
   // Use a random number in the state to keep it consistent / not change on new render events
-  const helpText = props.mostRecentRolls && helpfulHints[props.mostRecentRolls[0] % helpfulHints.length];
+  const helpText = props.mostRecentRolls && helpfulHints[props.mostRecentRolls[0]  helpfulHints.length];
 
   // If onLose is just an **end**, offer a retry button
   let retryButton = <span></span>;
@@ -477,6 +477,7 @@ function renderMidCombatDecision(props: CombatProps): JSX.Element {
     settings: props.settings,
     node: props.node,
     seed: props.seed,
+    maxAllowedAttempts: props.combat.numAliveAdventurers,
     multiplayerState: props.multiplayerState,
     onStartTimer: props.onDecisionTimerStart,
     onChoice: props.onDecisionChoice,

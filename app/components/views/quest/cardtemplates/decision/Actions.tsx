@@ -1,6 +1,6 @@
 import {SettingsType, MultiplayerState, AppStateWithHistory} from '../../../../../reducers/StateTypes'
 import {PLAYER_TIME_MULT} from '../../../../../Constants'
-import {DecisionState, DecisionType, OutcomeType, ScenarioType, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES, EMPTY_SCENARIO} from './Types'
+import {DecisionState, DecisionType, OutcomeType, ScenarioType, DIFFICULTIES, SKILL_TYPES, PERSONA_TYPES, EMPTY_SCENARIO, EMPTY_DECISION} from './Types'
 import Redux from 'redux'
 import {remoteify, QuestNodeAction} from '../../../../../actions/ActionTypes'
 import {audioSet} from '../../../../../actions/Audio'
@@ -11,17 +11,20 @@ import * as seedrandom from 'seedrandom'
 const NUM_SKILL_CHECK_CHOICES = 3;
 // Generate 3 random combinations of difficulty, skill, and persona.
 // Only 2 of the 3 fields will be available.
-export function generateDecisions(settings: SettingsType, rng: () => number): DecisionType[] {
+export function generateDecisions(settings: SettingsType, rng: () => number, maxAllowedAttempts?: number): DecisionType[] {
   const result: DecisionType[] = [];
   // TODO Make less dumb
   const selection = [[0,1,1], [1,0,1]][Math.floor(rng() * 2)];
 
   while (result.length < NUM_SKILL_CHECK_CHOICES) {
+    const maxAttempts = Math.min(maxAllowedAttempts || 999, 3);
+    const minAttempts = 1;
+
     const gen = {
       difficulty: (selection[0]) ? DIFFICULTIES[Math.floor(rng() * DIFFICULTIES.length)] : null,
       persona: (selection[1]) ? PERSONA_TYPES[Math.floor(rng() * PERSONA_TYPES.length)] : null,
       skill: SKILL_TYPES[Math.floor(rng() * SKILL_TYPES.length)],
-      allowedAttempts: Math.min(settings.numPlayers, Math.floor(rng() * 3 + 1)),
+      numAttempts: Math.min(settings.numPlayers, Math.floor(rng() * (maxAttempts - minAttempts + 1) + minAttempts)),
     };
 
     // Throw the generated one away if it exactly matches a result we've already generated
@@ -55,8 +58,9 @@ function numLocalAndMultiplayerPlayers(settings: SettingsType, rp?: MultiplayerS
 function generateDecisionTemplate(): DecisionState {
   return {
     scenario: EMPTY_SCENARIO,
-    allowedAttempts: 0,
+    numAttempts: 0,
     outcomes: [],
+    choice: EMPTY_DECISION,
   };
 }
 
@@ -96,8 +100,9 @@ export const handleDecisionSelect = remoteify(function handleDecision(a: HandleD
   const choosable = SCENARIOS[a.decision.skill][a.decision.persona || 'Light'];
   const arng = seedrandom.alea(a.seed);
 
+  decision.choice = a.decision;
   decision.scenario = choosable[Math.floor(arng()*choosable.length)];
-  decision.allowedAttempts = a.decision.allowedAttempts;
+  decision.numAttempts = a.decision.numAttempts;
 
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
 
@@ -110,7 +115,7 @@ export const handleDecisionSelect = remoteify(function handleDecision(a: HandleD
 
 function makeGenericRetryOutcome(): OutcomeType {
   // TODO more options
-  return {type: 'RETRY', title: 'Try Again', text: 'Just a little bit more! Try again!', instructions: []};
+  return {type: 'RETRY', text: 'Just a little bit more! Try again!', instructions: []};
 }
 
 interface HandleDecisionRollArgs {
@@ -133,7 +138,7 @@ export const handleDecisionRoll = remoteify(function handleDecisionRoll(a: Handl
   }
 
   // TODO: More randomized, include nonevent here.
-  const canRetry = (decision.allowedAttempts > decision.outcomes.length + 1);
+  const canRetry = (decision.numAttempts > decision.outcomes.length + 1);
   if (a.roll > 12) {
     decision.outcomes.push(a.scenario.success);
   } else if (a.roll > 8) {

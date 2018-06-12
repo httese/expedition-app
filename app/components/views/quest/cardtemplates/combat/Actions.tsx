@@ -83,6 +83,7 @@ export function generateCombatTemplate(settings: SettingsType, custom: boolean, 
 interface ToDecisionCardArgs {
   node?: ParserNode;
   phase: DecisionPhase;
+  numOutcomes?: number;
   settings?: SettingsType;
 }
 export const toDecisionCard = remoteify(function toDecisionCard(a: ToDecisionCardArgs, dispatch: Redux.Dispatch<any>, getState: () => AppStateWithHistory): ToDecisionCardArgs {
@@ -106,8 +107,9 @@ export const toDecisionCard = remoteify(function toDecisionCard(a: ToDecisionCar
   }
 
   dispatch({type: 'QUEST_NODE', node: a.node} as QuestNodeAction);
-  dispatch(toCard({name: 'QUEST_CARD', phase: 'MID_COMBAT_DECISION', keySuffix: a.phase}));
+  dispatch(toCard({name: 'QUEST_CARD', phase: 'MID_COMBAT_DECISION', keySuffix: a.phase + ((a.numOutcomes !== undefined) ? a.numOutcomes.toString() : '')}));
   return {
+    numOutcomes: a.numOutcomes,
     phase: a.phase,
   };
 });

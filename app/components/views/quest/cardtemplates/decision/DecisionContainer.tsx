@@ -38,13 +38,13 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Decis
       dispatch(handleDecisionTimerStart({}));
       dispatch(toCard({name: 'QUEST_CARD', phase: 'DECISION_TIMER'}));
     },
-    onChoice: (node: ParserNode, settings: SettingsType, decision: DecisionType, elapsedMillis: number, seed: string) => {
+    onChoice: (node: ParserNode, settings: SettingsType, choice: DecisionType, elapsedMillis: number, seed: string) => {
       dispatch(handleDecisionSelect({node, settings, elapsedMillis, decision, seed}));
       dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
     },
-    onRoll: (node: ParserNode, settings: SettingsType, scenario: Scenario, roll: number, seed: string) => {
-      dispatch(handleDecisionRoll({node, settings, scenario, roll, seed}));
-      dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
+    onRoll: (node: ParserNode, settings: SettingsType, decision: DecisionState, roll: number, seed: string) => {
+      dispatch(handleDecisionRoll({node, settings, scenario: decision.scenario, roll, seed}));
+      dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION',  keySuffix: ((a.numOutcomes !== undefined) ? a.numOutcomes.toString() : '')}));
     },
     onEnd: () => {
       // TODO

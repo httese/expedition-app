@@ -165,8 +165,6 @@ export class MultiplayerClient extends ClientBase {
         break;
       case 'INTERACTION':
         // Interaction events are not dispatched; UI element subscribers pick up the event on publish().
-        console.log('Received interaction');
-        console.log(e);
         break;
       case 'ACTION':
         // Actions must have IDs.

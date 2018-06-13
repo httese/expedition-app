@@ -3,8 +3,8 @@ declare var module: any;
 
 // Before we even import other modules, first hook into
 // console logging so we can pass details along with error reports.
-// import {setupLogging, logEvent} from './Logging'
-// setupLogging(console);
+import {setupLogging, logEvent} from './Logging'
+setupLogging(console);
 
 import * as React from 'react'
 import * as Redux from 'redux'
@@ -171,7 +171,6 @@ function handleUrlHash() {
   }
 }
 
-/*
 function setupOnError(window: Window) {
   window.onerror = (message: string, source: string, line: number) => {
     const state = getStore().getState();
@@ -207,7 +206,6 @@ function setupOnError(window: Window) {
     return true;
   };
 }
-*/
 
 function setupStorage(document: Document) {
   // Alert user if cookies disabled
@@ -244,7 +242,7 @@ export function init() {
   const window = getWindow();
   const document = getDocument();
 
-  //setupOnError(window); // Do first to catch other loading errors
+  setupOnError(window); // Do first to catch other loading errors
   setupStorage(document);
 
   window.platform = window.cordova ? 'cordova' : 'web';

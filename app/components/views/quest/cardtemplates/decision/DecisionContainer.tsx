@@ -7,7 +7,7 @@ import {
   handleDecisionSelect,
   handleDecisionRoll,
 } from './Actions'
-import {Decision, Scenario} from '../decision/Types'
+import {DecisionType, EMPTY_DECISION_STATE} from '../decision/Types'
 import {event} from '../../../../../actions/Quest'
 import {AppStateWithHistory, SettingsType} from '../../../../../reducers/StateTypes'
 import {EventParameters} from '../../../../../reducers/QuestTypes'
@@ -21,10 +21,11 @@ import {getStore} from '../../../../../Store'
 declare var window:any;
 
 const mapStateToProps = (state: AppStateWithHistory, ownProps: DecisionStateProps): DecisionStateProps => {
-  const stateDecision = (state.quest.node && state.quest.node.ctx && state.quest.node.ctx.templates && state.quest.node.ctx.templates.decision);
+  const stateDecision = (state.quest.node && state.quest.node.ctx && state.quest.node.ctx.templates && state.quest.node.ctx.templates.decision) || EMPTY_DECISION_STATE;
 
   return {
-    decision,
+    card: state.card,
+    decision: stateDecision,
     settings: state.settings,
     node: state.quest.node,
     seed: state.quest.seed,
@@ -39,12 +40,13 @@ const mapDispatchToProps = (dispatch: Redux.Dispatch<any>, ownProps: any): Decis
       dispatch(toCard({name: 'QUEST_CARD', phase: 'DECISION_TIMER'}));
     },
     onChoice: (node: ParserNode, settings: SettingsType, choice: DecisionType, elapsedMillis: number, seed: string) => {
-      dispatch(handleDecisionSelect({node, settings, elapsedMillis, decision, seed}));
-      dispatch(toCard({name: 'QUEST_CARD', phase:'ROLL_DECISION'}));
+      dispatch(handleDecisionSelect({node, settings, elapsedMillis, decision: choice, seed}));
+      dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION'}));
     },
     onRoll: (node: ParserNode, settings: SettingsType, decision: DecisionState, roll: number, seed: string) => {
       dispatch(handleDecisionRoll({node, settings, scenario: decision.scenario, roll, seed}));
-      dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION',  keySuffix: ((a.numOutcomes !== undefined) ? a.numOutcomes.toString() : '')}));
+      const numOutcomes = decision.outcomes.length;
+      dispatch(toCard({name: 'QUEST_CARD', phase:'RESOLVE_DECISION',  keySuffix: ((numOutcomes !== undefined) ? numOutcomes.toString() : '')}));
     },
     onEnd: () => {
       // TODO

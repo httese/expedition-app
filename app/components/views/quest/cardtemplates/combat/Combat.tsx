@@ -6,7 +6,7 @@ import Callout from '../../../../base/Callout'
 import Card from '../../../../base/Card'
 import Picker from '../../../../base/Picker'
 import TimerCard from '../../../../base/TimerCard'
-import {MAX_ADVENTURER_HEALTH} from '../../../../../Constants'
+import {MAX_ADVENTURER_HEALTH, NODE_ENV} from '../../../../../Constants'
 import {isSurgeNextRound, roundTimeMillis} from './Actions'
 import {SettingsType, CardState, MultiplayerState} from '../../../../../reducers/StateTypes'
 import {ParserNode} from '../TemplateTypes'
@@ -284,7 +284,7 @@ function renderResolve(props: CombatProps): JSX.Element {
 function renderPlayerTier(props: CombatProps): JSX.Element {
   const nextCard: CombatPhase = (props.settings.timerSeconds) ? 'PREPARE' : 'NO_TIMER';
 
-  const shouldRunDecision = (props.combat.roundCount % 2 === 0); // TODO CHANGE
+  const shouldRunDecision = (NODE_ENV === 'dev') && (props.combat.roundCount % 2 === 0); // TODO CHANGE
 
   let helpText: JSX.Element = (<span></span>);
   const damage = (props.combat.mostRecentAttack) ? props.combat.mostRecentAttack.damage : -1;

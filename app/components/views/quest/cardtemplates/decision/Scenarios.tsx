@@ -5,31 +5,31 @@ const scenarios: ScenarioType[] = [
     persona: 'Light',
     skill: 'Athletics',
 
-    prelude: 'Prelude text',
+    prelude: 'Out of the corner of your eye, you spot a medicinal herb. If you run to it quickly, you could use it for healing.',
 
-    success: {type: 'SUCCESS', text: 'You dance around your enemies, moving fast enough to produce a shock cone that cauterizes your wounds!', instructions: ['Regain 2 health']},
-    failure: {type: 'FAILURE', text: 'You trip and fall on your own face!', instructions: ['Lose 2 health']},
-    nonevent: {type: 'INTERRUPTED', text: 'Nothing happens.', instructions: []},
+    success: {type: 'SUCCESS', text: 'You grab the herb, pick off a leaf, and chew it down before the enemy gets a hit on you.', instructions: ['Regain 2 health']},
+    failure: {type: 'FAILURE', text: 'You trip and fall; the enemy gets in a hit on you.', instructions: ['Lose 2 health']},
+    nonevent: {type: 'INTERRUPTED', text: 'The enemy cuts you off before you can get to the herb.', instructions: []},
     retry: null,
   },
   {
     persona: 'Dark',
     skill: 'Athletics',
 
-    prelude: 'Prelude text',
+    prelude: 'An enemy appears to be... carrying something. You try to trip them up and steal it for yourself.',
 
-    success: {type: 'SUCCESS', text: 'You trip an enemy, making them drop some loot.', instructions: ['Gain 1 Tier I loot']},
-    failure: {type: 'FAILURE', text: 'You try to trip an enemy, but they trip you first!', instructions: ['Lose 1 Tier I loot']},
-    nonevent: {type: 'INTERRUPTED', text: 'Nothing happens.', instructions: []},
+    success: {type: 'SUCCESS', text: 'A well placed kick, and the loot drops to the ground. You snatch it up!', instructions: ['Gain 1 Tier I loot']},
+    failure: {type: 'FAILURE', text: 'They trip you first!', instructions: ['Lose 1 Tier I loot']},
+    nonevent: {type: 'INTERRUPTED', text: 'In the chaos of combat, your fancy footwork fails to fool the fiend. No loot for you, this time.', instructions: []},
     retry: null,
   },
   {
     persona: 'Light',
     skill: 'Knowledge',
 
-    prelude: 'Prelude text',
+    prelude: 'There\'s something oddly familiar about this combat...',
 
-    success: {type: 'SUCCESS', text: 'You recall a technique you read once; maybe you can put it to use...', instructions: ['Learn 1 ability']},
+    success: {type: 'SUCCESS', text: 'You recall a forgotten technique you read once; maybe you can put it to use...', instructions: ['Learn 1 ability']},
     failure: {type: 'FAILURE', text: 'You\'re not feelying particularly knowledgeable about your next action.', instructions: ['Your next ability counts as a failure.']},
     nonevent: {type: 'INTERRUPTED', text: 'Nothing happens.', instructions: []},
     retry: null,

@@ -64,8 +64,9 @@ function generateDecisionTemplate(): DecisionState {
   };
 }
 
-export function roundTimeMillis(settings: SettingsType, rp?: MultiplayerState) {
+export function skillTimeMillis(settings: SettingsType, rp?: MultiplayerState) {
   const totalPlayerCount = numLocalAndMultiplayerPlayers(settings, rp);
+  // TODO use different value here
   return settings.timerSeconds * 1000 * PLAYER_TIME_MULT[totalPlayerCount];
 }
 

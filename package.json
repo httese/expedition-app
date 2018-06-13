@@ -74,6 +74,7 @@
     "@types/classnames": "^2.2.4",
     "async": "~2.6.0",
     "cheerio": "~0.22.0",
+    "classnames": "^2.2.6",
     "connect": "^3.6.6",
     "cookie": "~0.3.1",
     "cordova-android": "~6.2.3",

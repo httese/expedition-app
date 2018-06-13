@@ -1309,8 +1309,8 @@ span.line {
     top: 0;
     left: 0;
     overflow: 'hidden';
-    pointerEvents: 'none';
-    zIndex: 1; /* This is also needed so that ripples do not bleed past a parent border radius.*/
+    pointer-events: 'none';
+    z-index: 1; /* This is also needed so that ripples do not bleed past a parent border radius.*/
   }
 
   .menu_popup {

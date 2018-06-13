@@ -1,5 +1,3 @@
-
-
 export type SkillType = 'Athletics' | 'Knowledge' | 'Charisma';
 export type DifficultyType = 'Easy' | 'Medium' | 'Hard';
 export type PersonaType = 'Light' | 'Dark';

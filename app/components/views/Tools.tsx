@@ -30,7 +30,7 @@ const Tools = (props: ToolsProps): JSX.Element => {
         </div>
       </Button>
       {!props.settings.simulator &&
-        <Button id="3" onClick={() => props.onMultiplayerSelect(props.user)}>
+        <Button id="selectOnlineMultiplayer" onClick={() => props.onMultiplayerSelect(props.user)}>
           <div className="questButtonWithIcon">
             <div className="title">Online Multiplayer - Beta</div>
             <div className="summary">
@@ -45,7 +45,7 @@ const Tools = (props: ToolsProps): JSX.Element => {
           <div className="summary">Write your own quests and share them with the world.</div>
         </div>
       </Button>}
-      {!props.settings.simulator && <Button id="2" onClick={() => props.onPrivateQuestsSelect(props.settings, props.user)}>
+      {!props.settings.simulator && <Button id="selectPrivateQuests" onClick={() => props.onPrivateQuestsSelect(props.settings, props.user)}>
         <div className="questButtonWithIcon">
           <div className="title">Private Quests</div>
           <div className="summary">View quests you've published privately with the Quest Creator (uses your current player count!)</div>

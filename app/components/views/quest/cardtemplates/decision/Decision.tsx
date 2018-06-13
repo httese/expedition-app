@@ -6,7 +6,7 @@ import Card from '../../../../base/Card'
 import Callout from '../../../../base/Callout'
 import {ParserNode} from '../TemplateTypes'
 import {SettingsType, CardState, CardThemeType, MultiplayerState} from '../../../../../reducers/StateTypes'
-import {generateDecisions, roundTimeMillis} from './Actions'
+import {generateDecisions, skillTimeMillis} from './Actions'
 import {DecisionState, DecisionType, EMPTY_OUTCOME} from './Types'
 import DecisionTimer from './DecisionTimer'
 
@@ -67,7 +67,7 @@ export function renderDecisionTimer(props: DecisionProps): JSX.Element {
     <DecisionTimer
       theme="dark"
       decisions={generateDecisions(props.settings, arng, props.maxAllowedAttempts)}
-      roundTimeTotalMillis={roundTimeMillis(props.settings, props.multiplayerState)}
+      roundTimeTotalMillis={skillTimeMillis(props.settings, props.multiplayerState)}
       onDecision={(d: DecisionType, ms: number) => props.onChoice(props.node, props.settings, d, ms, props.seed)} />
   );
 }

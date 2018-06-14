@@ -94,7 +94,7 @@
     "cordova-plugin-x-socialsharing": "~5.1.8",
     "deepmerge": "^2.1.1",
     "device": "^0.3.9",
-    "expedition-qdl": "git+https://github.com/ExpeditionRPG/expedition-qdl.git#73d563dc75745cdbae5e59370d09e09756b2b6c8",
+    "expedition-qdl": "git+https://github.com/ExpeditionRPG/expedition-qdl.git#fa34a0484ae4be51c8bfe052dcbc6139ee20aa41",
     "moment": "^2.22.1",
     "ms": "^2.1.1",
     "node-sass": "^4.9.0",

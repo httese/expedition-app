@@ -63,6 +63,7 @@ describe('Dependencies', () => {
       'karma-webpack',
       'enzyme-adapter-react-16',
       'react-test-renderer',
+      'es6-promise-plugin',
     ];
 
     let depstrs = Object.keys(package.dependencies);
